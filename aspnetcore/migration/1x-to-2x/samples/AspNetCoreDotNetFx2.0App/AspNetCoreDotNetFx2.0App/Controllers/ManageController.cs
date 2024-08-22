@@ -25,7 +25,7 @@ namespace AspNetCoreDotNetFx2._0App.Controllers
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
 
-        private const string AuthenicatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}";
+        private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}";
 
         public ManageController(
           UserManager<ApplicationUser> userManager,
@@ -333,7 +333,7 @@ namespace AspNetCoreDotNetFx2._0App.Controllers
 
             if (!user.TwoFactorEnabled)
             {
-                throw new ApplicationException($"Unexpected error occured disabling 2FA for user with ID '{user.Id}'.");
+                throw new ApplicationException($"Unexpected error occurred disabling 2FA for user with ID '{user.Id}'.");
             }
 
             return View(nameof(Disable2fa));
@@ -352,7 +352,7 @@ namespace AspNetCoreDotNetFx2._0App.Controllers
             var disable2faResult = await _userManager.SetTwoFactorEnabledAsync(user, false);
             if (!disable2faResult.Succeeded)
             {
-                throw new ApplicationException($"Unexpected error occured disabling 2FA for user with ID '{user.Id}'.");
+                throw new ApplicationException($"Unexpected error occurred disabling 2FA for user with ID '{user.Id}'.");
             }
 
             _logger.LogInformation("User with ID {UserId} has disabled 2fa.", user.Id);
@@ -491,7 +491,7 @@ namespace AspNetCoreDotNetFx2._0App.Controllers
         private string GenerateQrCodeUri(string email, string unformattedKey)
         {
             return string.Format(
-                AuthenicatorUriFormat,
+                AuthenticatorUriFormat,
                 "AspNetCoreDotNetFx2._0App",
                 email,
                 unformattedKey);

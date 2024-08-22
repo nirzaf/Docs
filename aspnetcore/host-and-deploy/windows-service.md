@@ -1,294 +1,1304 @@
 ---
 title: Host ASP.NET Core in a Windows Service
-author: guardrex
+author: tdykstra
 description: Learn how to host an ASP.NET Core app in a Windows Service.
-monikerRange: '>= aspnetcore-2.2'
+monikerRange: '>= aspnetcore-3.1'
 ms.author: tdykstra
 ms.custom: mvc
-ms.date: 11/26/2018
+ms.date: 12/19/2022
 uid: host-and-deploy/windows-service
 ---
 # Host ASP.NET Core in a Windows Service
 
-By [Luke Latham](https://github.com/guardrex) and [Tom Dykstra](https://github.com/tdykstra)
+[!INCLUDE[](~/includes/not-latest-version.md)]
 
-An ASP.NET Core app can be hosted on Windows as a [Windows Service](/dotnet/framework/windows-services/introduction-to-windows-service-applications) without using IIS. When hosted as a Windows Service, the app automatically starts after reboots.
+:::moniker range=">= aspnetcore-7.0"
 
-[View or download sample code](https://github.com/aspnet/Docs/tree/master/aspnetcore/host-and-deploy/windows-service/samples) ([how to download](xref:index#how-to-download-a-sample))
+An ASP.NET Core app can be hosted on Windows as a [Windows Service](/dotnet/framework/windows-services/introduction-to-windows-service-applications) without using IIS. When hosted as a Windows Service, the app automatically starts after server reboots.
+
+## Prerequisites
+
+* [ASP.NET Core SDK 7.0 or later](https://dotnet.microsoft.com/download)
+* [PowerShell 6.2 or later](https://github.com/PowerShell/PowerShell)
+
+## Worker Service template
+
+The ASP.NET Core Worker Service template provides a starting point for writing long running service apps. To use the template as a basis for a Windows Service app:
+
+1. Create a Worker Service app from the .NET Core template.
+1. Install the NuGet package [Microsoft.Extensions.Hosting.WindowsServices](https://www.nuget.org/packages/Microsoft.Extensions.Hosting.WindowsServices).
+1. Follow the guidance in the [App configuration](#app-configuration) section to update the Worker Service app so that it can run as a Windows Service.
+
+[!INCLUDE[](~/includes/worker-template-instructions.md)]
+
+## App configuration
+
+Update Program.cs to call [AddWindowsService](https://source.dot.net/#Microsoft.Extensions.Hosting.WindowsServices/WindowsServiceLifetimeHostBuilderExtensions.cs,f8bfb38e255ef3b6,references). When the app is running as a Windows Service, `AddWindowsService`:
+
+* Sets the host lifetime to `WindowsServiceLifetime`.
+* Sets the [content root](xref:fundamentals/index#content-root) to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory). For more information, see the [Current directory and content root](#current-directory-and-content-root) section.
+* Enables logging to the event log:
+  * The application name is used as the default source name.
+  * The default log level is *Warning* or higher for an app based on an ASP.NET Core template that calls `CreateDefaultBuilder` to build the host.
+  * Override the default log level with the `Logging:EventLog:LogLevel:Default` key in `appsettings.json`/`appsettings.{Environment}.json` or other configuration provider.
+  * Only administrators can create new event sources. When an event source can't be created using the application name, a warning is logged to the *Application* source and event logs are disabled.
+
+Consider the following `ServiceA` class:
+
+:::code language="csharp" source="~/host-and-deploy/windows-service/samples/7.x/WebAppServiceSample/Services/ServiceA.cs" :::
+
+The following `Program.cs` calls [`AddHostedService`](/dotnet/api/microsoft.extensions.dependencyinjection.servicecollectionhostedserviceextensions.addhostedservice) to register `ServiceA`:
+
+:::code language="csharp" source="~/host-and-deploy/windows-service/samples/7.x/WebAppServiceSample/Program.cs" highlight="5":::
+
+The following sample apps accompany this topic:
+
+* Background Worker Service Sample: A non-web app sample based on the [Worker Service template](#worker-service-template) that uses [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+* Web App Service Sample: A Razor Pages web app sample that runs as a Windows Service with [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+
+For MVC guidance, see the articles under <xref:mvc/overview> and <xref:migration/22-to-30>.
 
 ## Deployment type
 
-You can create either a framework-dependent or self-contained Windows Service deployment. For information and advice on deployment scenarios, see [.NET Core application deployment](/dotnet/core/deploying/).
+For information and advice on deployment scenarios, see [.NET Core application deployment](/dotnet/core/deploying/).
 
-### Framework-dependent deployment
+### SDK
 
-Framework-dependent deployment (FDD) relies on the presence of a shared system-wide version of .NET Core on the target system. When the FDD scenario is used with an ASP.NET Core Windows Service app, the SDK produces an executable (*\*.exe*), called a *framework-dependent executable*.
+For a web app-based service that uses the Razor Pages or MVC frameworks, specify the Web SDK in the project file:
 
-### Self-contained deployment
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Web">
+```
 
-Self-contained deployment (SCD) doesn't rely on the presence of shared components on the target system. The runtime and the app's dependencies are deployed with the app to the hosting system.
+If the service only executes background tasks (for example, [hosted services](xref:fundamentals/host/hosted-services)), specify the Worker SDK in the project file:
 
-## Convert a project into a Windows Service
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
 
-Make the following changes to an existing ASP.NET Core project to run the app as a service:
+### Framework-dependent deployment (FDD)
 
-1. Based on your choice of [deployment type](#deployment-type), update the project file:
+Framework-dependent deployment (FDD) relies on the presence of a shared system-wide version of .NET Core on the target system. When the FDD scenario is adopted following the guidance in this article, the SDK produces an executable (*.exe*), called a *framework-dependent executable*.
 
-   * **Framework-dependent Deployment (FDD)** &ndash; Add a Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) to the `<PropertyGroup>` that contains the target framework. Add the `<SelfContained>` property set to `false`. Disable the creation of a *web.config* file by adding the `<IsTransformWebConfigDisabled>` property set to `true`.
+If using the [Web SDK](#sdk), a *web.config* file, which is normally produced when publishing an ASP.NET Core app, is unnecessary for a Windows Services app. To disable the creation of the *web.config* file, add the `<IsTransformWebConfigDisabled>` property set to `true`.
 
-     ```xml
-     <PropertyGroup>
-       <TargetFramework>netcoreapp2.2</TargetFramework>
-       <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
-       <SelfContained>false</SelfContained>
-       <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-     </PropertyGroup>
-     ```
+```xml
+<PropertyGroup>
+  <TargetFramework>net7.0</TargetFramework>
+  <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+</PropertyGroup>
+```
 
-     **Self-contained Deployment (SCD)** &ndash; Confirm the presence of a Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) or add a RID to the `<PropertyGroup>` that contains the target framework. Disable the creation of a *web.config* file by adding the `<IsTransformWebConfigDisabled>` property set to `true`.
+### Self-contained deployment (SCD)
 
-     ```xml
-     <PropertyGroup>
-       <TargetFramework>netcoreapp2.2</TargetFramework>
-       <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
-       <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-     </PropertyGroup>
-     ```
+Self-contained deployment (SCD) doesn't rely on the presence of a shared framework on the host system. The runtime and the app's dependencies are deployed with the app.
 
-     To publish for multiple RIDs:
+A Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) is included in the `<PropertyGroup>` that contains the target framework:
 
-     * Provide the RIDs in a semicolon-delimited list.
-     * Use the property name `<RuntimeIdentifiers>` (plural).
+```xml
+<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+```
 
-     For more information, see [.NET Core RID Catalog](/dotnet/core/rid-catalog).
+To publish for multiple RIDs:
 
-   * Add a package reference for [Microsoft.AspNetCore.Hosting.WindowsServices](https://www.nuget.org/packages/Microsoft.AspNetCore.Hosting.WindowsServices).
+* Provide the RIDs in a semicolon-delimited list.
+* Use the property name [\<RuntimeIdentifiers>](/dotnet/core/tools/csproj#runtimeidentifiers) (plural).
 
-   * To enable Windows Event Log logging, add a package reference for [Microsoft.Extensions.Logging.EventLog](https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventLog).
+For more information, see [.NET Core RID Catalog](/dotnet/core/rid-catalog).
 
-     For more information, see the [Handle starting and stopping events](#handle-starting-and-stopping-events) section.
+## Service user account
 
-1. Make the following changes in `Program.Main`:
+To create a user account for a service, use the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet from an administrative PowerShell 6 command shell.
 
-   * To test and debug when running outside of a service, add code to determine if the app is running as a service or a console app. Inspect if the debugger is attached or a `--console` command-line argument is present.
+On Windows 10 October 2018 Update (version 1809/build 10.0.17763) or later:
 
-     If either condition is true (the app isn't run as a service), call <xref:Microsoft.AspNetCore.Hosting.WebHostExtensions.Run*> on the Web Host.
+```powershell
+New-LocalUser -Name {SERVICE NAME}
+```
 
-     If the conditions are false (the app is run as a service):
+On Windows OS earlier than the Windows 10 October 2018 Update (version 1809/build 10.0.17763):
 
-     * Call <xref:Microsoft.Extensions.Hosting.HostingHostBuilderExtensions.UseContentRoot*> and use a path to the app's published location. Don't call <xref:System.IO.Directory.GetCurrentDirectory*> to obtain the path because a Windows Service app returns the *C:\\WINDOWS\\system32* folder when `GetCurrentDirectory` is called. For more information, see the [Current directory and content root](#current-directory-and-content-root) section.
-     * Call <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostWindowsServiceExtensions.RunAsService*> to run the app as a service.
+```console
+powershell -Command "New-LocalUser -Name {SERVICE NAME}"
+```
 
-     Because the [Command-line Configuration Provider](xref:fundamentals/configuration/index#command-line-configuration-provider) requires name-value pairs for command-line arguments, the `--console` switch is removed from the arguments before <xref:Microsoft.AspNetCore.WebHost.CreateDefaultBuilder*> receives them.
+Provide a [strong password](/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements) when prompted.
 
-   * To write to the Windows Event Log, add the EventLog provider to <xref:Microsoft.AspNetCore.Hosting.WebHostBuilder.ConfigureLogging*>. Set the logging level with the `Logging:LogLevel:Default` key in the *appsettings.Production.json* file. For demonstration and testing purposes, the sample app's Production settings file sets the logging level to `Information`. In production, the value is typically set to `Error`. For more information, see <xref:fundamentals/logging/index#windows-eventlog-provider>.
+Unless the `-AccountExpires` parameter is supplied to the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet with an expiration <xref:System.DateTime>, the account doesn't expire.
 
-   [!code-csharp[](windows-service/samples/2.x/AspNetCoreService/Program.cs?name=snippet_Program)]
+For more information, see [Microsoft.PowerShell.LocalAccounts](/powershell/module/microsoft.powershell.localaccounts/) and [Service User Accounts](/windows/desktop/services/service-user-accounts).
 
-1. Publish the app using [dotnet publish](/dotnet/articles/core/tools/dotnet-publish), a [Visual Studio publish profile](xref:host-and-deploy/visual-studio-publish-profiles), or Visual Studio Code. When using Visual Studio, select the **FolderProfile** and configure the **Target Location** before selecting the **Publish** button.
+An alternative approach to managing users when using Active Directory is to use Managed Service Accounts. For more information, see [Group Managed Service Accounts Overview](/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview).
 
-   To publish the sample app using command-line interface (CLI) tools, run the [dotnet publish](/dotnet/core/tools/dotnet-publish) command at a command prompt from the project folder with a Release configuration passed to the [-c|--configuration](/dotnet/core/tools/dotnet-publish#options) option. Use the [-o|--output](/dotnet/core/tools/dotnet-publish#options) option with a path to publish to a folder outside of the app.
+## Log on as a service rights
 
-   * **Framework-dependent Deployment (FDD)**
+To establish *Log on as a service* rights for a service user account:
 
-     In the following example, the app is published to the *c:\\svc* folder:
+1. Open the Local Security Policy editor by running *secpol.msc*.
+1. Expand the **Local Policies** node and select **User Rights Assignment**.
+1. Open the **Log on as a service** policy.
+1. Select **Add User or Group**.
+1. Provide the object name (user account) using either of the following approaches:
+   1. Type the user account (`{DOMAIN OR COMPUTER NAME\USER}`) in the object name field and select **OK** to add the user to the policy.
+   1. Select **Advanced**. Select **Find Now**. Select the user account from the list. Select **OK**. Select **OK** again to add the user to the policy.
+1. Select **OK** or **Apply** to accept the changes.
 
-     ```console
-     dotnet publish --configuration Release --output c:\svc
-     ```
+## Create and manage the Windows Service
 
-   * **Self-contained Deployment (SCD)** &ndash; The RID must be specified in the `<RuntimeIdenfifier>` (or `<RuntimeIdentifiers>`) property of the project file. Supply the runtime to the [-r|--runtime](/dotnet/core/tools/dotnet-publish#options) option of the `dotnet publish` command.
+### Create a service
 
-     In the following example, the app is published for the `win7-x64` runtime to the *c:\\svc* folder:
+Use PowerShell commands to register a service. From an administrative PowerShell 6 command shell, execute the following commands:
 
-     ```console
-     dotnet publish --configuration Release --runtime win7-x64 --output c:\svc
-     ```
+```powershell
+$acl = Get-Acl "{EXE PATH}"
+$aclRuleArgs = "{DOMAIN OR COMPUTER NAME\USER}", "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
+$acl.SetAccessRule($accessRule)
+$acl | Set-Acl "{EXE PATH}"
 
-1. Create a user account for the service using the `net user` command:
+New-Service -Name {SERVICE NAME} -BinaryPathName "{EXE FILE PATH} --contentRoot {EXE FOLDER PATH}" -Credential "{DOMAIN OR COMPUTER NAME\USER}" -Description "{DESCRIPTION}" -DisplayName "{DISPLAY NAME}" -StartupType Automatic
+```
 
-   ```console
-   net user {USER ACCOUNT} {PASSWORD} /add
-   ```
+* `{EXE PATH}`: Path of the app's executable on the host (for example, `d:\myservice`). Don't include the app's executable file name in the path. A trailing slash isn't required.
+* `{DOMAIN OR COMPUTER NAME\USER}`: Service user account (for example, `Contoso\ServiceUser`).
+* `{SERVICE NAME}`: Service name (for example, `MyService`).
+* `{EXE FILE PATH}`: The app's full executable path (for example, `d:\myservice\myservice.exe`). Include the executable's file name with extension.
+* `{EXE FOLDER PATH}`: The app's full executable folder path (for example `d:\myservice`).
+* `{DESCRIPTION}`: Service description (for example, `My sample service`).
+* `{DISPLAY NAME}`: Service display name (for example, `My Service`).
 
-   For the sample app, create a user account with the name `ServiceUser` and a password. In the following command, replace `{PASSWORD}` with a [strong password](/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements).
+### Start a service
 
-   ```console
-   net user ServiceUser {PASSWORD} /add
-   ```
+Start a service with the following PowerShell 6 command:
 
-   If you need to add the user to a group, use the `net localgroup` command, where `{GROUP}` is the name of the group:
+```powershell
+Start-Service -Name {SERVICE NAME}
+```
 
-   ```console
-   net localgroup {GROUP} {USER ACCOUNT} /add
-   ```
+The command takes a few seconds to start the service.
 
-   For more information, see [Service User Accounts](/windows/desktop/services/service-user-accounts).
+### Determine a service's status
 
-1. Grant write/read/execute access to the app's folder using the [icacls](/windows-server/administration/windows-commands/icacls) command:
+To check the status of a service, use the following PowerShell 6 command:
 
-   ```console
-   icacls "{PATH}" /grant {USER ACCOUNT}:(OI)(CI){PERMISSION FLAGS} /t
-   ```
+```powershell
+Get-Service -Name {SERVICE NAME}
+```
 
-   * `{PATH}` &ndash; Path to the app's folder.
-   * `{USER ACCOUNT}` &ndash; The user account (SID).
-   * `(OI)` &ndash; The Object Inherit flag propagates permissions to subordinate files.
-   * `(CI)` &ndash; The Container Inherit flag propagates permissions to subordinate folders.
-   * `{PERMISSION FLAGS}` &ndash; Sets the app's access permissions.
-     * Write (`W`)
-     * Read (`R`)
-     * Execute (`X`)
-     * Full (`F`)
-     * Modify (`M`)
-   * `/t` &ndash; Apply recursively to existing subordinate folders and files.
+The status is reported as one of the following values:
 
-   For the sample app published to the *c:\\svc* folder and the `ServiceUser` account with write/read/execute permissions, use the following command:
+* `Starting`
+* `Running`
+* `Stopping`
+* `Stopped`
 
-   ```console
-   icacls "c:\svc" /grant ServiceUser:(OI)(CI)WRX /t
-   ```
+### Stop a service
 
-   For more information, see [icacls](/windows-server/administration/windows-commands/icacls).
+Stop a service with the following PowerShell 6 command:
 
-1. Use the [sc.exe](https://technet.microsoft.com/library/bb490995) command-line tool to create the service. The `binPath` value is the path to the app's executable, which includes the executable file name. **The space between the equal sign and the quote character of each parameter and value is required.**
+```powershell
+Stop-Service -Name {SERVICE NAME}
+```
 
-   ```console
-   sc create {SERVICE NAME} binPath= "{PATH}" obj= "{DOMAIN}\{USER ACCOUNT}" password= "{PASSWORD}"
-   ```
+### Remove a service
 
-   * `{SERVICE NAME}` &ndash; The name to assign to the service in [Service Control Manager](/windows/desktop/services/service-control-manager).
-   * `{PATH}` &ndash; The path to the service executable.
-   * `{DOMAIN}` &ndash; The domain of a domain-joined machine. If the machine isn't domain-joined, the local machine name.
-   * `{USER ACCOUNT}` &ndash; The user account under which the service runs.
-   * `{PASSWORD}` &ndash; The user account password.
+After a short delay to stop a service, remove a service with the following PowerShell 6 command:
 
-   > [!WARNING]
-   > Do **not** omit the `obj` parameter. The default value for `obj` is the [LocalSystem account](/windows/desktop/services/localsystem-account) account. Running a service under the `LocalSystem` account presents a significant security risk. Always run a service with a user account that has restricted privileges.
-
-   In the following example for the sample app:
-
-   * The service is named **MyService**.
-   * The published service resides in the *c:\\svc* folder. The app executable is named *SampleApp.exe*. Enclose the `binPath` value in double quotation marks (").
-   * The service runs under the `ServiceUser` account. Replace `{DOMAIN}` with the user account's domain or local machine name. Enclose the `obj` value in double quotation marks ("). Example: If the hosting system is a local machine named `MairaPC`, set `obj` to `"MairaPC\ServiceUser"`.
-   * Replace `{PASSWORD}` with the user account's password. Enclose the `password` value in double quotation marks (").
-
-   ```console
-   sc create MyService binPath= "c:\svc\sampleapp.exe" obj= "{DOMAIN}\ServiceUser" password= "{PASSWORD}"
-   ```
-
-   > [!IMPORTANT]
-   > Make sure that the spaces between the parameters' equal signs and the parameters' values are present.
-
-1. Start the service with the `sc start {SERVICE NAME}` command.
-
-   To start the sample app service, use the following command:
-
-   ```console
-   sc start MyService
-   ```
-
-   The command takes a few seconds to start the service.
-
-1. To check the status of the service, use the `sc query {SERVICE NAME}` command. The status is reported as one of the following values:
-
-   * `START_PENDING`
-   * `RUNNING`
-   * `STOP_PENDING`
-   * `STOPPED`
-
-   Use the following command to check the status of the sample app service:
-
-   ```console
-   sc query MyService
-   ```
-
-1. When the service is in the `RUNNING` state and if the service is a web app, browse the app at its path (by default, `http://localhost:5000`, which redirects to `https://localhost:5001` when using [HTTPS Redirection Middleware](xref:security/enforcing-ssl)).
-
-   For the sample app service, browse the app at `http://localhost:5000`.
-
-1. Stop the service with the `sc stop {SERVICE NAME}` command.
-
-   The following command stops the sample app service:
-
-   ```console
-   sc stop MyService
-   ```
-
-1. After a short delay to stop a service, uninstall the service with the `sc delete {SERVICE NAME}` command.
-
-   Check the status of the sample app service:
-
-   ```console
-   sc query MyService
-   ```
-
-   When the sample app service is in the `STOPPED` state, use the following command to uninstall the sample app service:
-
-   ```console
-   sc delete MyService
-   ```
-
-## Handle starting and stopping events
-
-To handle <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostService.OnStarting*>, <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostService.OnStarted*>, and <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostService.OnStopping*> events, perform the following additional changes:
-
-1. Create a class that derives from <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostService> with the `OnStarting`, `OnStarted`, and `OnStopping` methods:
-
-   [!code-csharp[](windows-service/samples/2.x/AspNetCoreService/CustomWebHostService.cs?name=snippet_CustomWebHostService)]
-
-2. Create an extension method for <xref:Microsoft.AspNetCore.Hosting.IWebHost> that passes the `CustomWebHostService` to <xref:System.ServiceProcess.ServiceBase.Run*>:
-
-   [!code-csharp[](windows-service/samples/2.x/AspNetCoreService/WebHostServiceExtensions.cs?name=ExtensionsClass)]
-
-3. In `Program.Main`, call the `RunAsCustomService` extension method instead of <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostWindowsServiceExtensions.RunAsService*>:
-
-   ```csharp
-   host.RunAsCustomService();
-   ```
-
-   To see the location of <xref:Microsoft.AspNetCore.Hosting.WindowsServices.WebHostWindowsServiceExtensions.RunAsService*> in `Program.Main`, refer to the code sample shown in the [Convert a project into a Windows Service](#convert-a-project-into-a-windows-service) section.
+```powershell
+Remove-Service -Name {SERVICE NAME}
+```
 
 ## Proxy server and load balancer scenarios
 
 Services that interact with requests from the Internet or a corporate network and are behind a proxy or load balancer might require additional configuration. For more information, see <xref:host-and-deploy/proxy-load-balancer>.
 
-## Configure HTTPS
+## Configure endpoints
 
-To configure the service with a secure endpoint:
+By default, ASP.NET Core binds to `http://localhost:5000`. Configure the URL and port by setting the `ASPNETCORE_URLS` environment variable.
 
-1. Create an X.509 certificate for the hosting system using your platform's certificate acquisition and deployment mechanisms.
+For additional URL and port configuration approaches, see the relevant server article:
 
-1. Specify a [Kestrel server HTTPS endpoint configuration](xref:fundamentals/servers/kestrel#endpoint-configuration) to use the certificate.
+* <xref:fundamentals/servers/kestrel/endpoints>
+* <xref:fundamentals/servers/httpsys#configure-windows-server>
 
-Use of the ASP.NET Core HTTPS development certificate to secure a service endpoint isn't supported.
+The preceding guidance covers support for HTTPS endpoints. For example, configure the app for HTTPS when authentication is used with a Windows Service.
+
+> [!NOTE]
+> Use of the ASP.NET Core HTTPS development certificate to secure a service endpoint isn't supported.
 
 ## Current directory and content root
 
-The current working directory returned by calling <xref:System.IO.Directory.GetCurrentDirectory*> for a Windows Service is the *C:\\WINDOWS\\system32* folder. The *system32* folder isn't a suitable location to store a service's files (for example, settings files). Use one of the following approaches to maintain and access a service's assets and settings files.
+The current working directory returned by calling <xref:System.IO.Directory.GetCurrentDirectory%2A> for a Windows Service is the *C:\\WINDOWS\\system32* folder. The *system32* folder isn't a suitable location to store a service's files (for example, settings files). Use one of the following approaches to maintain and access a service's assets and settings files.
 
-### Set the content root path to the app's folder
+### Use ContentRootPath or ContentRootFileProvider
 
-The <xref:Microsoft.Extensions.Hosting.IHostingEnvironment.ContentRootPath*> is the same path provided to the `binPath` argument when the service is created. Instead of calling `GetCurrentDirectory` to create paths to settings files, call <xref:Microsoft.Extensions.Hosting.HostingHostBuilderExtensions.UseContentRoot*> with the path to the app's content root.
+Use [IHostEnvironment.ContentRootPath](xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath) or <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootFileProvider> to locate an app's resources.
 
-In `Program.Main`, determine the path to the folder of the service's executable and use the path to establish the app's content root:
+When the app runs as a service, <xref:Microsoft.Extensions.Hosting.WindowsServiceLifetimeHostBuilderExtensions.UseWindowsService%2A> sets the <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath> to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory).
 
-```csharp
-var pathToExe = Process.GetCurrentProcess().MainModule.FileName;
-var pathToContentRoot = Path.GetDirectoryName(pathToExe);
+The app's default settings files, `appsettings.json` and `appsettings.{Environment}.json`, are loaded from the app's content root by calling [CreateDefaultBuilder during host construction](xref:fundamentals/host/generic-host#set-up-a-host).
 
-CreateWebHostBuilder(args)
-    .UseContentRoot(pathToContentRoot)
-    .Build()
-    .RunAsService();
+For other settings files loaded by developer code in <xref:Microsoft.Extensions.Hosting.HostBuilder.ConfigureAppConfiguration%2A>, there's no need to call <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A>. In the following example, the `custom_settings.json` file exists in the app's content root and is loaded without explicitly setting a base path:
+
+:::code language="csharp" source="windows-service/samples_snapshot/CustomSettingsExample.cs" highlight="13":::
+
+Don't attempt to use <xref:System.IO.Directory.GetCurrentDirectory%2A> to obtain a resource path because a Windows Service app returns the *C:\\WINDOWS\\system32* folder as its current directory.
+
+### Store a service's files in a suitable location on disk
+
+Specify an absolute path with <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A> when using an <xref:Microsoft.Extensions.Configuration.IConfigurationBuilder> to the folder containing the files.
+
+## Troubleshoot
+
+To troubleshoot a Windows Service app, see <xref:test/troubleshoot>.
+
+### Common errors
+
+* An old or pre-release version of PowerShell is in use.
+* The registered service doesn't use the app's **published** output from the [dotnet publish](/dotnet/core/tools/dotnet-publish) command. Output of the [dotnet build](/dotnet/core/tools/dotnet-build) command isn't supported for app deployment. Published assets are found in either of the following folders depending on the deployment type:
+  * *bin/Release/{TARGET FRAMEWORK}/publish* (FDD)
+  * *bin/Release/{TARGET FRAMEWORK}/{RUNTIME IDENTIFIER}/publish* (SCD)
+* The service isn't in the RUNNING state.
+* The paths to resources that the app uses (for example, certificates) are incorrect. The base path of a Windows Service is *c:\\Windows\\System32*.
+* The user doesn't have *Log on as a service* rights.
+* The user's password is expired or incorrectly passed when executing the `New-Service` PowerShell command.
+* The app requires ASP.NET Core authentication but isn't configured for secure connections (HTTPS).
+* The request URL port is incorrect or not configured correctly in the app.
+
+### System and Application Event Logs
+
+Access the System and Application Event Logs:
+
+1. Open the Start menu, search for *Event Viewer*, and select the **Event Viewer** app.
+1. In **Event Viewer**, open the **Windows Logs** node.
+1. Select **System** to open the System Event Log. Select **Application** to open the Application Event Log.
+1. Search for errors associated with the failing app.
+
+### Run the app at a command prompt
+
+Many startup errors don't produce useful information in the event logs. You can find the cause of some errors by running the app at a command prompt on the hosting system. To log additional detail from the app, lower the [log level](xref:fundamentals/logging/index#log-level) or run the app in the [Development environment](xref:fundamentals/environments).
+
+### Clear package caches
+
+A functioning app may fail immediately after upgrading either the .NET Core SDK on the development machine or changing package versions within the app. In some cases, incoherent packages may break an app when performing major upgrades. Most of these issues can be fixed by following these instructions:
+
+1. Delete the *bin* and *obj* folders.
+1. Clear the package caches by executing [dotnet nuget locals all --clear](/dotnet/core/tools/dotnet-nuget-locals) from a command shell.
+
+   Clearing package caches can also be accomplished with the [nuget.exe](https://www.nuget.org/downloads) tool and executing the command `nuget locals all -clear`. *nuget.exe* isn't a bundled install with the Windows desktop operating system and must be obtained separately from the [NuGet website](https://www.nuget.org/downloads).
+
+1. Restore and rebuild the project.
+1. Delete all of the files in the deployment folder on the server prior to redeploying the app.
+
+### Slow or unresponsive app
+
+A *crash dump* is a snapshot of the system's memory and can help determine the cause of an app crash, startup failure, or slow app.
+
+#### App crashes or encounters an exception
+
+Obtain and analyze a dump from [Windows Error Reporting (WER)](/windows/desktop/wer/windows-error-reporting):
+
+1. Create a folder to hold crash dump files at `c:\dumps`.
+1. Run the [EnableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/EnableDumps.ps1) with the application executable name:
+
+   ```powershell
+   .\EnableDumps {APPLICATION EXE} c:\dumps
+   ```
+
+1. Run the app under the conditions that cause the crash to occur.
+1. After the crash has occurred, run the [DisableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/DisableDumps.ps1):
+
+   ```powershell
+   .\DisableDumps {APPLICATION EXE}
+   ```
+
+After an app crashes and dump collection is complete, the app is allowed to terminate normally. The PowerShell script configures WER to collect up to five dumps per app.
+
+> [!WARNING]
+> Crash dumps might take up a large amount of disk space (up to several gigabytes each).
+
+#### App is unresponsive, fails during startup, or runs normally
+
+When an app *hangs* (stops responding but doesn't crash), fails during startup, or runs normally, see [User-Mode Dump Files: Choosing the Best Tool](/windows-hardware/drivers/debugger/user-mode-dump-files#choosing-the-best-tool) to select an appropriate tool to produce the dump.
+
+#### Analyze the dump
+
+A dump can be analyzed using several approaches. For more information, see [Analyzing a User-Mode Dump File](/windows-hardware/drivers/debugger/analyzing-a-user-mode-dump-file).
+
+## Additional resources
+
+* [View or download sample code](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/host-and-deploy/windows-service/samples) ([how to download](xref:index#how-to-download-a-sample))
+* [Kestrel endpoint configuration](xref:fundamentals/servers/kestrel/endpoints) (includes HTTPS configuration and SNI support)
+* <xref:fundamentals/host/generic-host>
+* <xref:test/troubleshoot>
+
+:::moniker-end
+
+:::moniker range="= aspnetcore-6.0"
+
+An ASP.NET Core app can be hosted on Windows as a [Windows Service](/dotnet/framework/windows-services/introduction-to-windows-service-applications) without using IIS. When hosted as a Windows Service, the app automatically starts after server reboots.
+
+[View or download sample code](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/host-and-deploy/windows-service/samples) ([how to download](xref:index#how-to-download-a-sample))
+
+## Prerequisites
+
+* [ASP.NET Core SDK 6.0 or later](https://dotnet.microsoft.com/download)
+* [PowerShell 6.2 or later](https://github.com/PowerShell/PowerShell)
+
+## Worker Service template
+
+The ASP.NET Core Worker Service template provides a starting point for writing long running service apps. To use the template as a basis for a Windows Service app:
+
+1. Create a Worker Service app from the .NET Core template.
+1. Follow the guidance in the [App configuration](#app-configuration) section to update the Worker Service app so that it can run as a Windows Service.
+
+[!INCLUDE[](~/includes/worker-template-instructions.md)]
+
+## App configuration
+
+The app requires a package reference for [Microsoft.Extensions.Hosting.WindowsServices](https://www.nuget.org/packages/Microsoft.Extensions.Hosting.WindowsServices).
+
+`IHostBuilder.UseWindowsService` is called when building the host. If the app is running as a Windows Service, the method:
+
+* Sets the host lifetime to `WindowsServiceLifetime`.
+* Sets the [content root](xref:fundamentals/index#content-root) to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory). For more information, see the [Current directory and content root](#current-directory-and-content-root) section.
+* Enables logging to the event log:
+  * The application name is used as the default source name.
+  * The default log level is *Warning* or higher for an app based on an ASP.NET Core template that calls `CreateDefaultBuilder` to build the host.
+  * Override the default log level with the `Logging:EventLog:LogLevel:Default` key in `appsettings.json`/`appsettings.{Environment}.json` or other configuration provider.
+  * Only administrators can create new event sources. When an event source can't be created using the application name, a warning is logged to the *Application* source and event logs are disabled.
+
+In `Program.cs`:
+
+* Set `ContentRootPath`
+* Call `UseWindowsService`
+
+:::code language="csharp" source="~/host-and-deploy/windows-service/samples/6.x/WebAppServiceSample/Program.cs" highlight="7,8,16":::
+
+The following sample apps accompany this topic:
+
+* Background Worker Service Sample: A non-web app sample based on the [Worker Service template](#worker-service-template) that uses [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+* Web App Service Sample: A Razor Pages web app sample that runs as a Windows Service with [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+
+For MVC guidance, see the articles under <xref:mvc/overview> and <xref:migration/22-to-30>.
+
+## Deployment type
+
+For information and advice on deployment scenarios, see [.NET Core application deployment](/dotnet/core/deploying/).
+
+### SDK
+
+For a web app-based service that uses the Razor Pages or MVC frameworks, specify the Web SDK in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Web">
 ```
 
-### Store the service's files in a suitable location on disk
+If the service only executes background tasks (for example, [hosted services](xref:fundamentals/host/hosted-services)), specify the Worker SDK in the project file:
 
-Specify an absolute path with <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath*> when using an <xref:Microsoft.Extensions.Configuration.IConfigurationBuilder> to the folder containing the files.
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
+
+### Framework-dependent deployment (FDD)
+
+Framework-dependent deployment (FDD) relies on the presence of a shared system-wide version of .NET Core on the target system. When the FDD scenario is adopted following the guidance in this article, the SDK produces an executable (*.exe*), called a *framework-dependent executable*.
+
+If using the [Web SDK](#sdk), a *web.config* file, which is normally produced when publishing an ASP.NET Core app, is unnecessary for a Windows Services app. To disable the creation of the *web.config* file, add the `<IsTransformWebConfigDisabled>` property set to `true`.
+
+```xml
+<PropertyGroup>
+  <TargetFramework>net6.0</TargetFramework>
+  <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+</PropertyGroup>
+```
+
+### Self-contained deployment (SCD)
+
+Self-contained deployment (SCD) doesn't rely on the presence of a shared framework on the host system. The runtime and the app's dependencies are deployed with the app.
+
+A Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) is included in the `<PropertyGroup>` that contains the target framework:
+
+```xml
+<RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+```
+
+To publish for multiple RIDs:
+
+* Provide the RIDs in a semicolon-delimited list.
+* Use the property name [\<RuntimeIdentifiers>](/dotnet/core/tools/csproj#runtimeidentifiers) (plural).
+
+For more information, see [.NET Core RID Catalog](/dotnet/core/rid-catalog).
+
+## Service user account
+
+To create a user account for a service, use the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet from an administrative PowerShell 6 command shell.
+
+On Windows 10 October 2018 Update (version 1809/build 10.0.17763) or later:
+
+```powershell
+New-LocalUser -Name {SERVICE NAME}
+```
+
+On Windows OS earlier than the Windows 10 October 2018 Update (version 1809/build 10.0.17763):
+
+```console
+powershell -Command "New-LocalUser -Name {SERVICE NAME}"
+```
+
+Provide a [strong password](/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements) when prompted.
+
+Unless the `-AccountExpires` parameter is supplied to the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet with an expiration <xref:System.DateTime>, the account doesn't expire.
+
+For more information, see [Microsoft.PowerShell.LocalAccounts](/powershell/module/microsoft.powershell.localaccounts/) and [Service User Accounts](/windows/desktop/services/service-user-accounts).
+
+An alternative approach to managing users when using Active Directory is to use Managed Service Accounts. For more information, see [Group Managed Service Accounts Overview](/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview).
+
+## Log on as a service rights
+
+To establish *Log on as a service* rights for a service user account:
+
+1. Open the Local Security Policy editor by running *secpol.msc*.
+1. Expand the **Local Policies** node and select **User Rights Assignment**.
+1. Open the **Log on as a service** policy.
+1. Select **Add User or Group**.
+1. Provide the object name (user account) using either of the following approaches:
+   1. Type the user account (`{DOMAIN OR COMPUTER NAME\USER}`) in the object name field and select **OK** to add the user to the policy.
+   1. Select **Advanced**. Select **Find Now**. Select the user account from the list. Select **OK**. Select **OK** again to add the user to the policy.
+1. Select **OK** or **Apply** to accept the changes.
+
+## Create and manage the Windows Service
+
+### Create a service
+
+Use PowerShell commands to register a service. From an administrative PowerShell 6 command shell, execute the following commands:
+
+```powershell
+$acl = Get-Acl "{EXE PATH}"
+$aclRuleArgs = "{DOMAIN OR COMPUTER NAME\USER}", "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
+$acl.SetAccessRule($accessRule)
+$acl | Set-Acl "{EXE PATH}"
+
+New-Service -Name {SERVICE NAME} -BinaryPathName "{EXE FILE PATH} --contentRoot {EXE FOLDER PATH}" -Credential "{DOMAIN OR COMPUTER NAME\USER}" -Description "{DESCRIPTION}" -DisplayName "{DISPLAY NAME}" -StartupType Automatic
+```
+
+* `{EXE PATH}`: Path of the app's executable on the host (for example, `d:\myservice`). Don't include the app's executable file name in the path. A trailing slash isn't required.
+* `{DOMAIN OR COMPUTER NAME\USER}`: Service user account (for example, `Contoso\ServiceUser`).
+* `{SERVICE NAME}`: Service name (for example, `MyService`).
+* `{EXE FILE PATH}`: The app's full executable path (for example, `d:\myservice\myservice.exe`). Include the executable's file name with extension.
+* `{EXE FOLDER PATH}`: The app's full executable folder path (for example `d:\myservice`).
+* `{DESCRIPTION}`: Service description (for example, `My sample service`).
+* `{DISPLAY NAME}`: Service display name (for example, `My Service`).
+
+### Start a service
+
+Start a service with the following PowerShell 6 command:
+
+```powershell
+Start-Service -Name {SERVICE NAME}
+```
+
+The command takes a few seconds to start the service.
+
+### Determine a service's status
+
+To check the status of a service, use the following PowerShell 6 command:
+
+```powershell
+Get-Service -Name {SERVICE NAME}
+```
+
+The status is reported as one of the following values:
+
+* `Starting`
+* `Running`
+* `Stopping`
+* `Stopped`
+
+### Stop a service
+
+Stop a service with the following PowerShell 6 command:
+
+```powershell
+Stop-Service -Name {SERVICE NAME}
+```
+
+### Remove a service
+
+After a short delay to stop a service, remove a service with the following PowerShell 6 command:
+
+```powershell
+Remove-Service -Name {SERVICE NAME}
+```
+
+## Proxy server and load balancer scenarios
+
+Services that interact with requests from the Internet or a corporate network and are behind a proxy or load balancer might require additional configuration. For more information, see <xref:host-and-deploy/proxy-load-balancer>.
+
+## Configure endpoints
+
+By default, ASP.NET Core binds to `http://localhost:5000`. Configure the URL and port by setting the `ASPNETCORE_URLS` environment variable.
+
+For additional URL and port configuration approaches, see the relevant server article:
+
+* <xref:fundamentals/servers/kestrel/endpoints>
+* <xref:fundamentals/servers/httpsys#configure-windows-server>
+
+The preceding guidance covers support for HTTPS endpoints. For example, configure the app for HTTPS when authentication is used with a Windows Service.
+
+> [!NOTE]
+> Use of the ASP.NET Core HTTPS development certificate to secure a service endpoint isn't supported.
+
+## Current directory and content root
+
+The current working directory returned by calling <xref:System.IO.Directory.GetCurrentDirectory%2A> for a Windows Service is the *C:\\WINDOWS\\system32* folder. The *system32* folder isn't a suitable location to store a service's files (for example, settings files). Use one of the following approaches to maintain and access a service's assets and settings files.
+
+### Use ContentRootPath or ContentRootFileProvider
+
+Use [IHostEnvironment.ContentRootPath](xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath) or <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootFileProvider> to locate an app's resources.
+
+When the app runs as a service, <xref:Microsoft.Extensions.Hosting.WindowsServiceLifetimeHostBuilderExtensions.UseWindowsService%2A> sets the <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath> to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory).
+
+The app's default settings files, `appsettings.json` and `appsettings.{Environment}.json`, are loaded from the app's content root by calling [CreateDefaultBuilder during host construction](xref:fundamentals/host/generic-host#set-up-a-host).
+
+For other settings files loaded by developer code in <xref:Microsoft.Extensions.Hosting.HostBuilder.ConfigureAppConfiguration%2A>, there's no need to call <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A>. In the following example, the `custom_settings.json` file exists in the app's content root and is loaded without explicitly setting a base path:
+
+:::code language="csharp" source="windows-service/samples_snapshot/CustomSettingsExample.cs" highlight="13":::
+
+Don't attempt to use <xref:System.IO.Directory.GetCurrentDirectory%2A> to obtain a resource path because a Windows Service app returns the *C:\\WINDOWS\\system32* folder as its current directory.
+
+### Store a service's files in a suitable location on disk
+
+Specify an absolute path with <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A> when using an <xref:Microsoft.Extensions.Configuration.IConfigurationBuilder> to the folder containing the files.
+
+## Troubleshoot
+
+To troubleshoot a Windows Service app, see <xref:test/troubleshoot>.
+
+### Common errors
+
+* An old or pre-release version of PowerShell is in use.
+* The registered service doesn't use the app's **published** output from the [dotnet publish](/dotnet/core/tools/dotnet-publish) command. Output of the [dotnet build](/dotnet/core/tools/dotnet-build) command isn't supported for app deployment. Published assets are found in either of the following folders depending on the deployment type:
+  * *bin/Release/{TARGET FRAMEWORK}/publish* (FDD)
+  * *bin/Release/{TARGET FRAMEWORK}/{RUNTIME IDENTIFIER}/publish* (SCD)
+* The service isn't in the RUNNING state.
+* The paths to resources that the app uses (for example, certificates) are incorrect. The base path of a Windows Service is *c:\\Windows\\System32*.
+* The user doesn't have *Log on as a service* rights.
+* The user's password is expired or incorrectly passed when executing the `New-Service` PowerShell command.
+* The app requires ASP.NET Core authentication but isn't configured for secure connections (HTTPS).
+* The request URL port is incorrect or not configured correctly in the app.
+
+### System and Application Event Logs
+
+Access the System and Application Event Logs:
+
+1. Open the Start menu, search for *Event Viewer*, and select the **Event Viewer** app.
+1. In **Event Viewer**, open the **Windows Logs** node.
+1. Select **System** to open the System Event Log. Select **Application** to open the Application Event Log.
+1. Search for errors associated with the failing app.
+
+### Run the app at a command prompt
+
+Many startup errors don't produce useful information in the event logs. You can find the cause of some errors by running the app at a command prompt on the hosting system. To log additional detail from the app, lower the [log level](xref:fundamentals/logging/index#log-level) or run the app in the [Development environment](xref:fundamentals/environments).
+
+### Clear package caches
+
+A functioning app may fail immediately after upgrading either the .NET Core SDK on the development machine or changing package versions within the app. In some cases, incoherent packages may break an app when performing major upgrades. Most of these issues can be fixed by following these instructions:
+
+1. Delete the *bin* and *obj* folders.
+1. Clear the package caches by executing [dotnet nuget locals all --clear](/dotnet/core/tools/dotnet-nuget-locals) from a command shell.
+
+   Clearing package caches can also be accomplished with the [nuget.exe](https://www.nuget.org/downloads) tool and executing the command `nuget locals all -clear`. *nuget.exe* isn't a bundled install with the Windows desktop operating system and must be obtained separately from the [NuGet website](https://www.nuget.org/downloads).
+
+1. Restore and rebuild the project.
+1. Delete all of the files in the deployment folder on the server prior to redeploying the app.
+
+### Slow or unresponsive app
+
+A *crash dump* is a snapshot of the system's memory and can help determine the cause of an app crash, startup failure, or slow app.
+
+#### App crashes or encounters an exception
+
+Obtain and analyze a dump from [Windows Error Reporting (WER)](/windows/desktop/wer/windows-error-reporting):
+
+1. Create a folder to hold crash dump files at `c:\dumps`.
+1. Run the [EnableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/EnableDumps.ps1) with the application executable name:
+
+   ```powershell
+   .\EnableDumps {APPLICATION EXE} c:\dumps
+   ```
+
+1. Run the app under the conditions that cause the crash to occur.
+1. After the crash has occurred, run the [DisableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/DisableDumps.ps1):
+
+   ```powershell
+   .\DisableDumps {APPLICATION EXE}
+   ```
+
+After an app crashes and dump collection is complete, the app is allowed to terminate normally. The PowerShell script configures WER to collect up to five dumps per app.
+
+> [!WARNING]
+> Crash dumps might take up a large amount of disk space (up to several gigabytes each).
+
+#### App is unresponsive, fails during startup, or runs normally
+
+When an app *hangs* (stops responding but doesn't crash), fails during startup, or runs normally, see [User-Mode Dump Files: Choosing the Best Tool](/windows-hardware/drivers/debugger/user-mode-dump-files#choosing-the-best-tool) to select an appropriate tool to produce the dump.
+
+#### Analyze the dump
+
+A dump can be analyzed using several approaches. For more information, see [Analyzing a User-Mode Dump File](/windows-hardware/drivers/debugger/analyzing-a-user-mode-dump-file).
+
+## Additional resources
+
+* [Kestrel endpoint configuration](xref:fundamentals/servers/kestrel/endpoints) (includes HTTPS configuration and SNI support)
+* <xref:fundamentals/host/generic-host>
+* <xref:test/troubleshoot>
+
+:::moniker-end
+
+:::moniker range="= aspnetcore-5.0"
+
+An ASP.NET Core app can be hosted on Windows as a [Windows Service](/dotnet/framework/windows-services/introduction-to-windows-service-applications) without using IIS. When hosted as a Windows Service, the app automatically starts after server reboots.
+
+[View or download sample code](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/host-and-deploy/windows-service/samples) ([how to download](xref:index#how-to-download-a-sample))
+
+## Prerequisites
+
+* [ASP.NET Core SDK 5.0](https://dotnet.microsoft.com/download)
+* [PowerShell 6.2 or later](https://github.com/PowerShell/PowerShell)
+
+## Worker Service template
+
+The ASP.NET Core Worker Service template provides a starting point for writing long running service apps. To use the template as a basis for a Windows Service app:
+
+1. Create a Worker Service app from the .NET Core template.
+1. Follow the guidance in the [App configuration](#app-configuration) section to update the Worker Service app so that it can run as a Windows Service.
+
+[!INCLUDE[](~/includes/worker-template-instructions.md)]
+
+## App configuration
+
+The app requires a package reference for [Microsoft.Extensions.Hosting.WindowsServices](https://www.nuget.org/packages/Microsoft.Extensions.Hosting.WindowsServices).
+
+`IHostBuilder.UseWindowsService` is called when building the host. If the app is running as a Windows Service, the method:
+
+* Sets the host lifetime to `WindowsServiceLifetime`.
+* Sets the [content root](xref:fundamentals/index#content-root) to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory). For more information, see the [Current directory and content root](#current-directory-and-content-root) section.
+* Enables logging to the event log:
+  * The application name is used as the default source name.
+  * The default log level is *Warning* or higher for an app based on an ASP.NET Core template that calls `CreateDefaultBuilder` to build the host.
+  * Override the default log level with the `Logging:EventLog:LogLevel:Default` key in `appsettings.json`/`appsettings.{Environment}.json` or other configuration provider.
+  * Only administrators can create new event sources. When an event source can't be created using the application name, a warning is logged to the *Application* source and event logs are disabled.
+
+In `CreateHostBuilder` of `Program.cs`:
+
+```csharp
+Host.CreateDefaultBuilder(args)
+    .UseWindowsService()
+    ...
+```
+
+The following sample apps accompany this topic:
+
+* Background Worker Service Sample: A non-web app sample based on the [Worker Service template](#worker-service-template) that uses [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+* Web App Service Sample: A Razor Pages web app sample that runs as a Windows Service with [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+
+For MVC guidance, see the articles under <xref:mvc/overview> and <xref:migration/22-to-30>.
+
+## Deployment type
+
+For information and advice on deployment scenarios, see [.NET Core application deployment](/dotnet/core/deploying/).
+
+### SDK
+
+For a web app-based service that uses the Razor Pages or MVC frameworks, specify the Web SDK in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Web">
+```
+
+If the service only executes background tasks (for example, [hosted services](xref:fundamentals/host/hosted-services)), specify the Worker SDK in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
+
+### Framework-dependent deployment (FDD)
+
+Framework-dependent deployment (FDD) relies on the presence of a shared system-wide version of .NET Core on the target system. When the FDD scenario is adopted following the guidance in this article, the SDK produces an executable (*.exe*), called a *framework-dependent executable*.
+
+If using the [Web SDK](#sdk), a *web.config* file, which is normally produced when publishing an ASP.NET Core app, is unnecessary for a Windows Services app. To disable the creation of the *web.config* file, add the `<IsTransformWebConfigDisabled>` property set to `true`.
+
+```xml
+<PropertyGroup>
+  <TargetFramework>netcoreapp3.0</TargetFramework>
+  <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+</PropertyGroup>
+```
+
+### Self-contained deployment (SCD)
+
+Self-contained deployment (SCD) doesn't rely on the presence of a shared framework on the host system. The runtime and the app's dependencies are deployed with the app.
+
+A Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) is included in the `<PropertyGroup>` that contains the target framework:
+
+```xml
+<RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+```
+
+To publish for multiple RIDs:
+
+* Provide the RIDs in a semicolon-delimited list.
+* Use the property name [\<RuntimeIdentifiers>](/dotnet/core/tools/csproj#runtimeidentifiers) (plural).
+
+For more information, see [.NET Core RID Catalog](/dotnet/core/rid-catalog).
+
+## Service user account
+
+To create a user account for a service, use the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet from an administrative PowerShell 6 command shell.
+
+On Windows 10 October 2018 Update (version 1809/build 10.0.17763) or later:
+
+```powershell
+New-LocalUser -Name {SERVICE NAME}
+```
+
+On Windows OS earlier than the Windows 10 October 2018 Update (version 1809/build 10.0.17763):
+
+```console
+powershell -Command "New-LocalUser -Name {SERVICE NAME}"
+```
+
+Provide a [strong password](/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements) when prompted.
+
+Unless the `-AccountExpires` parameter is supplied to the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet with an expiration <xref:System.DateTime>, the account doesn't expire.
+
+For more information, see [Microsoft.PowerShell.LocalAccounts](/powershell/module/microsoft.powershell.localaccounts/) and [Service User Accounts](/windows/desktop/services/service-user-accounts).
+
+An alternative approach to managing users when using Active Directory is to use Managed Service Accounts. For more information, see [Group Managed Service Accounts Overview](/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview).
+
+## Log on as a service rights
+
+To establish *Log on as a service* rights for a service user account:
+
+1. Open the Local Security Policy editor by running *secpol.msc*.
+1. Expand the **Local Policies** node and select **User Rights Assignment**.
+1. Open the **Log on as a service** policy.
+1. Select **Add User or Group**.
+1. Provide the object name (user account) using either of the following approaches:
+   1. Type the user account (`{DOMAIN OR COMPUTER NAME\USER}`) in the object name field and select **OK** to add the user to the policy.
+   1. Select **Advanced**. Select **Find Now**. Select the user account from the list. Select **OK**. Select **OK** again to add the user to the policy.
+1. Select **OK** or **Apply** to accept the changes.
+
+## Create and manage the Windows Service
+
+### Create a service
+
+Use PowerShell commands to register a service. From an administrative PowerShell 6 command shell, execute the following commands:
+
+```powershell
+$acl = Get-Acl "{EXE PATH}"
+$aclRuleArgs = "{DOMAIN OR COMPUTER NAME\USER}", "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
+$acl.SetAccessRule($accessRule)
+$acl | Set-Acl "{EXE PATH}"
+
+New-Service -Name {SERVICE NAME} -BinaryPathName "{EXE FILE PATH}" -Credential "{DOMAIN OR COMPUTER NAME\USER}" -Description "{DESCRIPTION}" -DisplayName "{DISPLAY NAME}" -StartupType Automatic
+```
+
+* `{EXE PATH}`: Path of the app's executable on the host (for example, `d:\myservice`). Don't include the app's executable file name in the path. A trailing slash isn't required.
+* `{DOMAIN OR COMPUTER NAME\USER}`: Service user account (for example, `Contoso\ServiceUser`).
+* `{SERVICE NAME}`: Service name (for example, `MyService`).
+* `{EXE FILE PATH}`: The app's full executable path (for example, `d:\myservice\myservice.exe`). Include the executable's file name with extension.
+* `{DESCRIPTION}`: Service description (for example, `My sample service`).
+* `{DISPLAY NAME}`: Service display name (for example, `My Service`).
+
+### Start a service
+
+Start a service with the following PowerShell 6 command:
+
+```powershell
+Start-Service -Name {SERVICE NAME}
+```
+
+The command takes a few seconds to start the service.
+
+### Determine a service's status
+
+To check the status of a service, use the following PowerShell 6 command:
+
+```powershell
+Get-Service -Name {SERVICE NAME}
+```
+
+The status is reported as one of the following values:
+
+* `Starting`
+* `Running`
+* `Stopping`
+* `Stopped`
+
+### Stop a service
+
+Stop a service with the following PowerShell 6 command:
+
+```powershell
+Stop-Service -Name {SERVICE NAME}
+```
+
+### Remove a service
+
+After a short delay to stop a service, remove a service with the following PowerShell 6 command:
+
+```powershell
+Remove-Service -Name {SERVICE NAME}
+```
+
+## Proxy server and load balancer scenarios
+
+Services that interact with requests from the Internet or a corporate network and are behind a proxy or load balancer might require additional configuration. For more information, see <xref:host-and-deploy/proxy-load-balancer>.
+
+## Configure endpoints
+
+By default, ASP.NET Core binds to `http://localhost:5000`. Configure the URL and port by setting the `ASPNETCORE_URLS` environment variable.
+
+For additional URL and port configuration approaches, see the relevant server article:
+
+* <xref:fundamentals/servers/kestrel/endpoints>
+* <xref:fundamentals/servers/httpsys#configure-windows-server>
+
+The preceding guidance covers support for HTTPS endpoints. For example, configure the app for HTTPS when authentication is used with a Windows Service.
+
+> [!NOTE]
+> Use of the ASP.NET Core HTTPS development certificate to secure a service endpoint isn't supported.
+
+## Current directory and content root
+
+The current working directory returned by calling <xref:System.IO.Directory.GetCurrentDirectory%2A> for a Windows Service is the *C:\\WINDOWS\\system32* folder. The *system32* folder isn't a suitable location to store a service's files (for example, settings files). Use one of the following approaches to maintain and access a service's assets and settings files.
+
+### Use ContentRootPath or ContentRootFileProvider
+
+Use [IHostEnvironment.ContentRootPath](xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath) or <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootFileProvider> to locate an app's resources.
+
+When the app runs as a service, <xref:Microsoft.Extensions.Hosting.WindowsServiceLifetimeHostBuilderExtensions.UseWindowsService%2A> sets the <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath> to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory).
+
+The app's default settings files, `appsettings.json` and `appsettings.{Environment}.json`, are loaded from the app's content root by calling [CreateDefaultBuilder during host construction](xref:fundamentals/host/generic-host#set-up-a-host).
+
+For other settings files loaded by developer code in <xref:Microsoft.Extensions.Hosting.HostBuilder.ConfigureAppConfiguration%2A>, there's no need to call <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A>. In the following example, the `custom_settings.json` file exists in the app's content root and is loaded without explicitly setting a base path:
+
+:::code language="csharp" source="windows-service/samples_snapshot/CustomSettingsExample.cs" highlight="13":::
+
+Don't attempt to use <xref:System.IO.Directory.GetCurrentDirectory%2A> to obtain a resource path because a Windows Service app returns the *C:\\WINDOWS\\system32* folder as its current directory.
+
+### Store a service's files in a suitable location on disk
+
+Specify an absolute path with <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A> when using an <xref:Microsoft.Extensions.Configuration.IConfigurationBuilder> to the folder containing the files.
+
+## Troubleshoot
+
+To troubleshoot a Windows Service app, see <xref:test/troubleshoot>.
+
+### Common errors
+
+* An old or pre-release version of PowerShell is in use.
+* The registered service doesn't use the app's **published** output from the [dotnet publish](/dotnet/core/tools/dotnet-publish) command. Output of the [dotnet build](/dotnet/core/tools/dotnet-build) command isn't supported for app deployment. Published assets are found in either of the following folders depending on the deployment type:
+  * *bin/Release/{TARGET FRAMEWORK}/publish* (FDD)
+  * *bin/Release/{TARGET FRAMEWORK}/{RUNTIME IDENTIFIER}/publish* (SCD)
+* The service isn't in the RUNNING state.
+* The paths to resources that the app uses (for example, certificates) are incorrect. The base path of a Windows Service is *c:\\Windows\\System32*.
+* The user doesn't have *Log on as a service* rights.
+* The user's password is expired or incorrectly passed when executing the `New-Service` PowerShell command.
+* The app requires ASP.NET Core authentication but isn't configured for secure connections (HTTPS).
+* The request URL port is incorrect or not configured correctly in the app.
+
+### System and Application Event Logs
+
+Access the System and Application Event Logs:
+
+1. Open the Start menu, search for *Event Viewer*, and select the **Event Viewer** app.
+1. In **Event Viewer**, open the **Windows Logs** node.
+1. Select **System** to open the System Event Log. Select **Application** to open the Application Event Log.
+1. Search for errors associated with the failing app.
+
+### Run the app at a command prompt
+
+Many startup errors don't produce useful information in the event logs. You can find the cause of some errors by running the app at a command prompt on the hosting system. To log additional detail from the app, lower the [log level](xref:fundamentals/logging/index#log-level) or run the app in the [Development environment](xref:fundamentals/environments).
+
+### Clear package caches
+
+A functioning app may fail immediately after upgrading either the .NET Core SDK on the development machine or changing package versions within the app. In some cases, incoherent packages may break an app when performing major upgrades. Most of these issues can be fixed by following these instructions:
+
+1. Delete the *bin* and *obj* folders.
+1. Clear the package caches by executing [dotnet nuget locals all --clear](/dotnet/core/tools/dotnet-nuget-locals) from a command shell.
+
+   Clearing package caches can also be accomplished with the [nuget.exe](https://www.nuget.org/downloads) tool and executing the command `nuget locals all -clear`. *nuget.exe* isn't a bundled install with the Windows desktop operating system and must be obtained separately from the [NuGet website](https://www.nuget.org/downloads).
+
+1. Restore and rebuild the project.
+1. Delete all of the files in the deployment folder on the server prior to redeploying the app.
+
+### Slow or unresponsive app
+
+A *crash dump* is a snapshot of the system's memory and can help determine the cause of an app crash, startup failure, or slow app.
+
+#### App crashes or encounters an exception
+
+Obtain and analyze a dump from [Windows Error Reporting (WER)](/windows/desktop/wer/windows-error-reporting):
+
+1. Create a folder to hold crash dump files at `c:\dumps`.
+1. Run the [EnableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/EnableDumps.ps1) with the application executable name:
+
+   ```powershell
+   .\EnableDumps {APPLICATION EXE} c:\dumps
+   ```
+
+1. Run the app under the conditions that cause the crash to occur.
+1. After the crash has occurred, run the [DisableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/DisableDumps.ps1):
+
+   ```powershell
+   .\DisableDumps {APPLICATION EXE}
+   ```
+
+After an app crashes and dump collection is complete, the app is allowed to terminate normally. The PowerShell script configures WER to collect up to five dumps per app.
+
+> [!WARNING]
+> Crash dumps might take up a large amount of disk space (up to several gigabytes each).
+
+#### App is unresponsive, fails during startup, or runs normally
+
+When an app *hangs* (stops responding but doesn't crash), fails during startup, or runs normally, see [User-Mode Dump Files: Choosing the Best Tool](/windows-hardware/drivers/debugger/user-mode-dump-files#choosing-the-best-tool) to select an appropriate tool to produce the dump.
+
+#### Analyze the dump
+
+A dump can be analyzed using several approaches. For more information, see [Analyzing a User-Mode Dump File](/windows-hardware/drivers/debugger/analyzing-a-user-mode-dump-file).
+
+## Additional resources
+
+* [Kestrel endpoint configuration](xref:fundamentals/servers/kestrel/endpoints) (includes HTTPS configuration and SNI support)
+* <xref:fundamentals/host/generic-host>
+* <xref:test/troubleshoot>
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-5.0"
+
+An ASP.NET Core app can be hosted on Windows as a [Windows Service](/dotnet/framework/windows-services/introduction-to-windows-service-applications) without using IIS. When hosted as a Windows Service, the app automatically starts after server reboots.
+
+[View or download sample code](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/host-and-deploy/windows-service/samples) ([how to download](xref:index#how-to-download-a-sample))
+
+## Prerequisites
+
+* [ASP.NET Core SDK 2.1 or later](https://dotnet.microsoft.com/download)
+* [PowerShell 6.2 or later](https://github.com/PowerShell/PowerShell)
+
+## Worker Service template
+
+The ASP.NET Core Worker Service template provides a starting point for writing long running service apps. To use the template as a basis for a Windows Service app:
+
+1. Create a Worker Service app from the .NET Core template.
+1. Follow the guidance in the [App configuration](#app-configuration) section to update the Worker Service app so that it can run as a Windows Service.
+
+[!INCLUDE[](~/includes/worker-template-instructions.md)]
+
+## App configuration
+
+The app requires a package reference for [Microsoft.Extensions.Hosting.WindowsServices](https://www.nuget.org/packages/Microsoft.Extensions.Hosting.WindowsServices).
+
+`IHostBuilder.UseWindowsService` is called when building the host. If the app is running as a Windows Service, the method:
+
+* Sets the host lifetime to `WindowsServiceLifetime`.
+* Sets the [content root](xref:fundamentals/index#content-root) to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory). For more information, see the [Current directory and content root](#current-directory-and-content-root) section.
+* Enables logging to the event log:
+  * The application name is used as the default source name.
+  * The default log level is *Warning* or higher for an app based on an ASP.NET Core template that calls `CreateDefaultBuilder` to build the host.
+  * Override the default log level with the `Logging:EventLog:LogLevel:Default` key in `appsettings.json`/`appsettings.{Environment}.json` or other configuration provider.
+  * Only administrators can create new event sources. When an event source can't be created using the application name, a warning is logged to the *Application* source and event logs are disabled.
+
+In `CreateHostBuilder` of `Program.cs`:
+
+```csharp
+Host.CreateDefaultBuilder(args)
+    .UseWindowsService()
+    ...
+```
+
+The following sample apps accompany this topic:
+
+* Background Worker Service Sample: A non-web app sample based on the [Worker Service template](#worker-service-template) that uses [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+* Web App Service Sample: A Razor Pages web app sample that runs as a Windows Service with [hosted services](xref:fundamentals/host/hosted-services) for background tasks.
+
+For MVC guidance, see the articles under <xref:mvc/overview> and <xref:migration/22-to-30>.
+
+## Deployment type
+
+For information and advice on deployment scenarios, see [.NET Core application deployment](/dotnet/core/deploying/).
+
+### SDK
+
+For a web app-based service that uses the Razor Pages or MVC frameworks, specify the Web SDK in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Web">
+```
+
+If the service only executes background tasks (for example, [hosted services](xref:fundamentals/host/hosted-services)), specify the Worker SDK in the project file:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+```
+
+### Framework-dependent deployment (FDD)
+
+Framework-dependent deployment (FDD) relies on the presence of a shared system-wide version of .NET Core on the target system. When the FDD scenario is adopted following the guidance in this article, the SDK produces an executable (*.exe*), called a *framework-dependent executable*.
+
+If using the [Web SDK](#sdk), a *web.config* file, which is normally produced when publishing an ASP.NET Core app, is unnecessary for a Windows Services app. To disable the creation of the *web.config* file, add the `<IsTransformWebConfigDisabled>` property set to `true`.
+
+```xml
+<PropertyGroup>
+  <TargetFramework>netcoreapp3.0</TargetFramework>
+  <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+</PropertyGroup>
+```
+
+### Self-contained deployment (SCD)
+
+Self-contained deployment (SCD) doesn't rely on the presence of a shared framework on the host system. The runtime and the app's dependencies are deployed with the app.
+
+A Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) is included in the `<PropertyGroup>` that contains the target framework:
+
+```xml
+<RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+```
+
+To publish for multiple RIDs:
+
+* Provide the RIDs in a semicolon-delimited list.
+* Use the property name [\<RuntimeIdentifiers>](/dotnet/core/tools/csproj#runtimeidentifiers) (plural).
+
+For more information, see [.NET Core RID Catalog](/dotnet/core/rid-catalog).
+
+## Service user account
+
+To create a user account for a service, use the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet from an administrative PowerShell 6 command shell.
+
+On Windows 10 October 2018 Update (version 1809/build 10.0.17763) or later:
+
+```powershell
+New-LocalUser -Name {SERVICE NAME}
+```
+
+On Windows OS earlier than the Windows 10 October 2018 Update (version 1809/build 10.0.17763):
+
+```console
+powershell -Command "New-LocalUser -Name {SERVICE NAME}"
+```
+
+Provide a [strong password](/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements) when prompted.
+
+Unless the `-AccountExpires` parameter is supplied to the [New-LocalUser](/powershell/module/microsoft.powershell.localaccounts/new-localuser) cmdlet with an expiration <xref:System.DateTime>, the account doesn't expire.
+
+For more information, see [Microsoft.PowerShell.LocalAccounts](/powershell/module/microsoft.powershell.localaccounts/) and [Service User Accounts](/windows/desktop/services/service-user-accounts).
+
+An alternative approach to managing users when using Active Directory is to use Managed Service Accounts. For more information, see [Group Managed Service Accounts Overview](/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview).
+
+## Log on as a service rights
+
+To establish *Log on as a service* rights for a service user account:
+
+1. Open the Local Security Policy editor by running *secpol.msc*.
+1. Expand the **Local Policies** node and select **User Rights Assignment**.
+1. Open the **Log on as a service** policy.
+1. Select **Add User or Group**.
+1. Provide the object name (user account) using either of the following approaches:
+   1. Type the user account (`{DOMAIN OR COMPUTER NAME\USER}`) in the object name field and select **OK** to add the user to the policy.
+   1. Select **Advanced**. Select **Find Now**. Select the user account from the list. Select **OK**. Select **OK** again to add the user to the policy.
+1. Select **OK** or **Apply** to accept the changes.
+
+## Create and manage the Windows Service
+
+### Create a service
+
+Use PowerShell commands to register a service. From an administrative PowerShell 6 command shell, execute the following commands:
+
+```powershell
+$acl = Get-Acl "{EXE PATH}"
+$aclRuleArgs = "{DOMAIN OR COMPUTER NAME\USER}", "Read,Write,ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow"
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($aclRuleArgs)
+$acl.SetAccessRule($accessRule)
+$acl | Set-Acl "{EXE PATH}"
+
+New-Service -Name {SERVICE NAME} -BinaryPathName "{EXE FILE PATH}" -Credential "{DOMAIN OR COMPUTER NAME\USER}" -Description "{DESCRIPTION}" -DisplayName "{DISPLAY NAME}" -StartupType Automatic
+```
+
+* `{EXE PATH}`: Path of the app's executable on the host (for example, `d:\myservice`). Don't include the app's executable file name in the path. A trailing slash isn't required.
+* `{DOMAIN OR COMPUTER NAME\USER}`: Service user account (for example, `Contoso\ServiceUser`).
+* `{SERVICE NAME}`: Service name (for example, `MyService`).
+* `{EXE FILE PATH}`: The app's full executable path (for example, `d:\myservice\myservice.exe`). Include the executable's file name with extension.
+* `{DESCRIPTION}`: Service description (for example, `My sample service`).
+* `{DISPLAY NAME}`: Service display name (for example, `My Service`).
+
+### Start a service
+
+Start a service with the following PowerShell 6 command:
+
+```powershell
+Start-Service -Name {SERVICE NAME}
+```
+
+The command takes a few seconds to start the service.
+
+### Determine a service's status
+
+To check the status of a service, use the following PowerShell 6 command:
+
+```powershell
+Get-Service -Name {SERVICE NAME}
+```
+
+The status is reported as one of the following values:
+
+* `Starting`
+* `Running`
+* `Stopping`
+* `Stopped`
+
+### Stop a service
+
+Stop a service with the following PowerShell 6 command:
+
+```powershell
+Stop-Service -Name {SERVICE NAME}
+```
+
+### Remove a service
+
+After a short delay to stop a service, remove a service with the following PowerShell 6 command:
+
+```powershell
+Remove-Service -Name {SERVICE NAME}
+```
+
+## Proxy server and load balancer scenarios
+
+Services that interact with requests from the Internet or a corporate network and are behind a proxy or load balancer might require additional configuration. For more information, see <xref:host-and-deploy/proxy-load-balancer>.
+
+## Configure endpoints
+
+By default, ASP.NET Core binds to `http://localhost:5000`. Configure the URL and port by setting the `ASPNETCORE_URLS` environment variable.
+
+For additional URL and port configuration approaches, see the relevant server article:
+
+* <xref:fundamentals/servers/kestrel#endpoint-configuration>
+* <xref:fundamentals/servers/httpsys#configure-windows-server>
+
+The preceding guidance covers support for HTTPS endpoints. For example, configure the app for HTTPS when authentication is used with a Windows Service.
+
+> [!NOTE]
+> Use of the ASP.NET Core HTTPS development certificate to secure a service endpoint isn't supported.
+
+## Current directory and content root
+
+The current working directory returned by calling <xref:System.IO.Directory.GetCurrentDirectory%2A> for a Windows Service is the *C:\\WINDOWS\\system32* folder. The *system32* folder isn't a suitable location to store a service's files (for example, settings files). Use one of the following approaches to maintain and access a service's assets and settings files.
+
+### Use ContentRootPath or ContentRootFileProvider
+
+Use [IHostEnvironment.ContentRootPath](xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath) or <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootFileProvider> to locate an app's resources.
+
+When the app runs as a service, <xref:Microsoft.Extensions.Hosting.WindowsServiceLifetimeHostBuilderExtensions.UseWindowsService%2A> sets the <xref:Microsoft.Extensions.Hosting.IHostEnvironment.ContentRootPath> to [AppContext.BaseDirectory](xref:System.AppContext.BaseDirectory).
+
+The app's default settings files, `appsettings.json` and `appsettings.{Environment}.json`, are loaded from the app's content root by calling [CreateDefaultBuilder during host construction](xref:fundamentals/host/generic-host#set-up-a-host).
+
+For other settings files loaded by developer code in <xref:Microsoft.Extensions.Hosting.HostBuilder.ConfigureAppConfiguration%2A>, there's no need to call <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A>. In the following example, the `custom_settings.json` file exists in the app's content root and is loaded without explicitly setting a base path:
+
+:::code language="csharp" source="windows-service/samples_snapshot/CustomSettingsExample.cs" highlight="13":::
+
+Don't attempt to use <xref:System.IO.Directory.GetCurrentDirectory%2A> to obtain a resource path because a Windows Service app returns the *C:\\WINDOWS\\system32* folder as its current directory.
+
+### Store a service's files in a suitable location on disk
+
+Specify an absolute path with <xref:Microsoft.Extensions.Configuration.FileConfigurationExtensions.SetBasePath%2A> when using an <xref:Microsoft.Extensions.Configuration.IConfigurationBuilder> to the folder containing the files.
+
+## Troubleshoot
+
+To troubleshoot a Windows Service app, see <xref:test/troubleshoot>.
+
+### Common errors
+
+* An old or pre-release version of PowerShell is in use.
+* The registered service doesn't use the app's **published** output from the [dotnet publish](/dotnet/core/tools/dotnet-publish) command. Output of the [dotnet build](/dotnet/core/tools/dotnet-build) command isn't supported for app deployment. Published assets are found in either of the following folders depending on the deployment type:
+  * *bin/Release/{TARGET FRAMEWORK}/publish* (FDD)
+  * *bin/Release/{TARGET FRAMEWORK}/{RUNTIME IDENTIFIER}/publish* (SCD)
+* The service isn't in the RUNNING state.
+* The paths to resources that the app uses (for example, certificates) are incorrect. The base path of a Windows Service is *c:\\Windows\\System32*.
+* The user doesn't have *Log on as a service* rights.
+* The user's password is expired or incorrectly passed when executing the `New-Service` PowerShell command.
+* The app requires ASP.NET Core authentication but isn't configured for secure connections (HTTPS).
+* The request URL port is incorrect or not configured correctly in the app.
+
+### System and Application Event Logs
+
+Access the System and Application Event Logs:
+
+1. Open the Start menu, search for *Event Viewer*, and select the **Event Viewer** app.
+1. In **Event Viewer**, open the **Windows Logs** node.
+1. Select **System** to open the System Event Log. Select **Application** to open the Application Event Log.
+1. Search for errors associated with the failing app.
+
+### Run the app at a command prompt
+
+Many startup errors don't produce useful information in the event logs. You can find the cause of some errors by running the app at a command prompt on the hosting system. To log additional detail from the app, lower the [log level](xref:fundamentals/logging/index#log-level) or run the app in the [Development environment](xref:fundamentals/environments).
+
+### Clear package caches
+
+A functioning app may fail immediately after upgrading either the .NET Core SDK on the development machine or changing package versions within the app. In some cases, incoherent packages may break an app when performing major upgrades. Most of these issues can be fixed by following these instructions:
+
+1. Delete the *bin* and *obj* folders.
+1. Clear the package caches by executing [dotnet nuget locals all --clear](/dotnet/core/tools/dotnet-nuget-locals) from a command shell.
+
+   Clearing package caches can also be accomplished with the [nuget.exe](https://www.nuget.org/downloads) tool and executing the command `nuget locals all -clear`. *nuget.exe* isn't a bundled install with the Windows desktop operating system and must be obtained separately from the [NuGet website](https://www.nuget.org/downloads).
+
+1. Restore and rebuild the project.
+1. Delete all of the files in the deployment folder on the server prior to redeploying the app.
+
+### Slow or unresponsive app
+
+A *crash dump* is a snapshot of the system's memory and can help determine the cause of an app crash, startup failure, or slow app.
+
+#### App crashes or encounters an exception
+
+Obtain and analyze a dump from [Windows Error Reporting (WER)](/windows/desktop/wer/windows-error-reporting):
+
+1. Create a folder to hold crash dump files at `c:\dumps`.
+1. Run the [EnableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/EnableDumps.ps1) with the application executable name:
+
+   ```powershell
+   .\EnableDumps {APPLICATION EXE} c:\dumps
+   ```
+
+1. Run the app under the conditions that cause the crash to occur.
+1. After the crash has occurred, run the [DisableDumps PowerShell script](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/host-and-deploy/windows-service/samples/scripts/DisableDumps.ps1):
+
+   ```powershell
+   .\DisableDumps {APPLICATION EXE}
+   ```
+
+After an app crashes and dump collection is complete, the app is allowed to terminate normally. The PowerShell script configures WER to collect up to five dumps per app.
+
+> [!WARNING]
+> Crash dumps might take up a large amount of disk space (up to several gigabytes each).
+
+#### App is unresponsive, fails during startup, or runs normally
+
+When an app *hangs* (stops responding but doesn't crash), fails during startup, or runs normally, see [User-Mode Dump Files: Choosing the Best Tool](/windows-hardware/drivers/debugger/user-mode-dump-files#choosing-the-best-tool) to select an appropriate tool to produce the dump.
+
+#### Analyze the dump
+
+A dump can be analyzed using several approaches. For more information, see [Analyzing a User-Mode Dump File](/windows-hardware/drivers/debugger/analyzing-a-user-mode-dump-file).
 
 ## Additional resources
 
 * [Kestrel endpoint configuration](xref:fundamentals/servers/kestrel#endpoint-configuration) (includes HTTPS configuration and SNI support)
-* <xref:fundamentals/host/web-host>
+* <xref:fundamentals/host/generic-host>
 * <xref:test/troubleshoot>
+
+:::moniker-end

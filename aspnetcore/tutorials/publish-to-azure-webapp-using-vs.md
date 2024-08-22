@@ -1,60 +1,47 @@
 ---
 title: Publish an ASP.NET Core app to Azure with Visual Studio
-author: rick-anderson
+author: wadepickett
 description: Learn how to publish an ASP.NET Core app to Azure App Service using Visual Studio.
-ms.author: riande
-ms.custom: mvc
-ms.date: 10/24/2018
+monikerRange: '>= aspnetcore-7.0'
+ms.author: wpickett
+ms.custom: "devx-track-csharp, mvc, engagement-fy23"
+ms.date: 02/03/2023
 uid: tutorials/publish-to-azure-webapp-using-vs
 ---
 # Publish an ASP.NET Core app to Azure with Visual Studio
 
-By [Rick Anderson](https://twitter.com/RickAndMSFT), [Cesar Blum Silveira](https://github.com/cesarbs), and [Rachel Appel](https://twitter.com/rachelappel)
-
 [!INCLUDE [Azure App Service Preview Notice](../includes/azure-apps-preview-notice.md)]
 
-See [Publish to Azure from Visual Studio for Mac](https://blog.xamarin.com/publish-azure-visual-studio-mac/) if you are working on macOS.
-
-To troubleshoot an App Service deployment issue, see <xref:host-and-deploy/azure-apps/troubleshoot>.
+To troubleshoot an App Service deployment issue, see <xref:test/troubleshoot-azure-iis>.
 
 ## Set up
 
-* Open a [free Azure account](https://azure.microsoft.com/free/dotnet/) if you don't have one. 
+Open a [free Azure account](https://azure.microsoft.com/free/dotnet/) if you don't have one.
 
 ## Create a web app
 
-In the Visual Studio Start Page, select **File > New > Project...**
+Start Visual Studio 2022 and select **Create a new project**.
 
-![File menu](publish-to-azure-webapp-using-vs/_static/file_new_project.png)
+![Create a new project from the start window](publish-to-azure-webapp-using-vs/_static/start-window-create-new-project.png)
 
-Complete the **New Project** dialog:
+In the **Create a new project** dialog, select **ASP.NET Core Web App**, and then select **Next**.
 
-* In the left pane, select **.NET Core**.
-* In the center pane, select **ASP.NET Core Web Application**.
-* Select **OK**.
+![Create an ASP.NET Core Web App](publish-to-azure-webapp-using-vs/_static/np.png)
 
-![New Project dialog](publish-to-azure-webapp-using-vs/_static/new_prj.png)
+In the **Configure your new project** dialog, name your project, and then select **Next**.
 
-In the **New ASP.NET Core Web Application** dialog:
+In the **Additional information** dialog:
 
-* Select **Web Application**.
-* Select **Change Authentication**.
+* In the **Framework** input, select **.NET 7.0 (Standard Term Support)**.
+* In the **Authentication type** input, select **Individual Accounts**, and then select **Create**.
 
-![New Project dialog](publish-to-azure-webapp-using-vs/_static/new_prj_2.png)
-
-The **Change Authentication** dialog appears. 
-
-* Select **Individual User Accounts**.
-* Select **OK** to return to the **New ASP.NET Core Web Application**, then select **OK** again.
-
-![New ASP.NET Core Web authentication dialog](publish-to-azure-webapp-using-vs/_static/new_prj_auth.png) 
+![Additional information](publish-to-azure-webapp-using-vs/_static/additional-info.png)
 
 Visual Studio creates the solution.
 
 ## Run the app
 
-* Press CTRL+F5 to run the project.
-* Test the **About** and **Contact** links.
+* Press F5 to run the project.
 
 ![Web application open in Microsoft Edge on localhost](publish-to-azure-webapp-using-vs/_static/show.png)
 
@@ -62,100 +49,131 @@ Visual Studio creates the solution.
 
 * Select **Register** and register a new user. You can use a fictitious email address. When you submit, the page displays the following error:
 
-    *"Internal Server Error: A database operation failed while processing the request. SQL exception: Cannot open the database. Applying existing migrations for Application DB context may resolve this issue."*
+    *"A database operation failed while processing the request. Applying existing migrations may resolve this issue"*
 * Select **Apply Migrations** and, once the page updates, refresh the page.
 
-![Internal Server Error: A database operation failed while processing the request. SQL exception: Cannot open the database. Applying existing migrations for Application DB context may resolve this issue.](publish-to-azure-webapp-using-vs/_static/mig.png)
+![A database operation failed while processing the request](publish-to-azure-webapp-using-vs/_static/mig.png)
 
-The app displays the email used to register the new user and a **Log out** link.
+* A **Register confirmation** page is displayed. Select **Click here to confirm your account**.
+* A **Confirm email** page is displayed.
+* Log in as the new user.
 
-![Web application open in Microsoft Edge. The Register link is replaced by the text Hello email@domain.com!](publish-to-azure-webapp-using-vs/_static/hello.png)
+The app displays the email used to register the new user and a **Logout** link.
+
+![Web application open in Microsoft Edge. The Register link is replaced by the text Hello user@example.com!](publish-to-azure-webapp-using-vs/_static/hello.png)
+
+* Stop the application by closing the browser, or in Visual Studio select **Debug** > **Stop Debugging**.
+* In Visual Studio select **Build** > **Clean Solution** to  clean project items  and avoid file contention.
 
 ## Deploy the app to Azure
 
-Right-click on the project in Solution Explorer and select **Publish...**.
+Right-click on the project in Solution Explorer and select **Publish**.
 
 ![Contextual menu open with Publish link highlighted](publish-to-azure-webapp-using-vs/_static/pub.png)
 
 In the **Publish** dialog:
 
-* Select **Microsoft Azure App Service**.
-* Select the gear icon and then select **Create Profile**.
-* Select **Create Profile**.
+* Select **Azure**.
+* Select **Next**.
 
 ![Publish dialog](publish-to-azure-webapp-using-vs/_static/maas1.png)
 
-### Create Azure resources
+In the **Publish** dialog:
+
+* Select **Azure App Service (Windows)**.
+* Select **Next**.
+
+![Publish Dialog: select Azure Service](publish-to-azure-webapp-using-vs/_static/maas2.png)
+
+In the **Publish** dialog, in the **App Service** tab, select **Create new**.
+
+![Publish dialog: select Azure Service instance](publish-to-azure-webapp-using-vs/_static/maas3.png)
 
 The **Create App Service** dialog appears:
 
-* Enter your subscription.
-* The **App Name**, **Resource Group**, and **App Service Plan** entry fields are populated. You can keep these names or change them.
+* The **Name**, **Resource Group**, and **Hosting Plan** entry fields are populated. You can keep these names or change them.
+* Select **Create**.
 
-![App Service dialog](publish-to-azure-webapp-using-vs/_static/newrg1.png)
+![Create App Service dialog](publish-to-azure-webapp-using-vs/_static/newrg1.png)
 
-* Select the **Services** tab to create a new database.
+After creation is completed the dialog is automatically closed and the **Publish** dialog gets focus again:
 
-* Select the green **+** icon to create a new SQL Database
+* The new instance that was just created is automatically selected.
+* Select **Finish**.
 
-![New SQL Database](publish-to-azure-webapp-using-vs/_static/sql.png)
+![Publish dialog: select App Service instance](publish-to-azure-webapp-using-vs/_static/select_as.png)
 
-* Select **New...** on the **Configure SQL Database** dialog to create a new database.
+The **Publish profile creation progress** dialog confirms the publish profile was created. Select **Close**.
 
-![New SQL Database and server](publish-to-azure-webapp-using-vs/_static/conf.png)
+Next you see the **Publish Profile summary** page. Visual Studio has detected that this application requires a SQL Server database which it has listed in the Service Dependencies pane. Select the ellipsis (**...**) and then **Connect**.
 
-The **Configure SQL Server** dialog appears.
+![Publish Profile summary page: configure SQL Server dependency](publish-to-azure-webapp-using-vs/_static/sql.png)
 
-* Enter an administrator user name and password, and then select **OK**. You can keep the default **Server Name**. 
+The **Connect to dependency** dialog appears:
 
-> [!NOTE]
-> "admin" isn't allowed as the administrator user name.
+* Select **Azure SQL Database**.
+* Select **Next**.
 
-![Configure SQL Server dialog](publish-to-azure-webapp-using-vs/_static/conf_servername.png)
+![Configure SQL Server Dependency dialog](publish-to-azure-webapp-using-vs/_static/sql1.png)
 
-* Select **OK**.
+In the **Connect to Azure SQL database** dialog, select **Create new**.
 
-Visual Studio returns to the **Create App Service** dialog.
+![Select Create a SQL DB](publish-to-azure-webapp-using-vs/_static/sql2.png)
 
-* Select **Create** on the **Create App Service** dialog.
+The **Create Azure SQL Database** appears:
 
-![Configure SQL Database dialog](publish-to-azure-webapp-using-vs/_static/conf_final.png)
+* The **Database name**, **Resource Group**, **Database server** and **App Service Plan** entry fields are populated. You can keep these values or change them.
+* Enter the **Database administrator username** and **Database administrator password** for the selected **Database server** (note the account you use must have the necessary permissions to create the new Azure SQL database)
+* Select **Create**.
 
-Visual Studio creates the Web app and SQL Server on Azure. This step can take a few minutes. For information on the resources created, see [Additional resources](#additonal-resources).
+![New Azure SQL Database dialog](publish-to-azure-webapp-using-vs/_static/sql_create.png)
 
-When deployment completes, select **Settings**:
+After creation is completed the dialog is automatically closed and the **Connect to Azure SQL Database** dialog gets focus again:
 
-![Configure SQL Server dialog](publish-to-azure-webapp-using-vs/_static/set.png)
+* The new instance that was just created is automatically selected.
+* Select **Next**.
 
-On the **Settings** page of the **Publish** dialog:
+![Select Next](publish-to-azure-webapp-using-vs/_static/sql_select.png)
 
-  * Expand **Databases** and check **Use this connection string at runtime**.
-  * Expand **Entity Framework Migrations** and check **Apply this migration on publish**.
+In the next step of the **Connect to Azure SQL Database** dialog:
 
-* Select **Save**. Visual Studio returns to the **Publish** dialog. 
+* Enter the **Database connection user name** and **Database connection password** fields. These are the details your application will use to connect to the database at runtime. Best practice is to avoid using the same details as the admin username and password used in the previous step.
+* Select **Finish**.
 
-![Publish dialog: Settings panel](publish-to-azure-webapp-using-vs/_static/pubs.png)
+![Configure Azure SQL Database dialog, connection string details](publish-to-azure-webapp-using-vs/_static/sql_connection.png)
 
-Click **Publish**. Visual Studio publishes your app to Azure. When the deployment completes, the app is opened in a browser.
+The **Dependency configuration progress** dialog confirms the Azure SQL Database is configured. Select **Close**.
 
-### Test your app in Azure
+In the **Publish Profile summary** page select **More actions** > **Edit**:
 
-* Test the **About** and **Contact** links
+![Publish profile summary page: edit settings](publish-to-azure-webapp-using-vs/_static/pp_configured.png)
 
-* Register a new user
+On the **Settings** tab of the **Publish** dialog:
 
-![Web application opened in Microsoft Edge on Azure App Service](publish-to-azure-webapp-using-vs/_static/register.png)
+* Expand **Databases** and check **Use this connection string at runtime**.
+* Expand **Entity Framework Migrations** and select **Apply this migration on publish**.
+
+* Select **Save**. Visual Studio returns to the **Publish** dialog.
+
+![Publish dialog: Settings panel:Save](publish-to-azure-webapp-using-vs/_static/pp_settings.png)
+
+Click **Publish**. Visual Studio publishes your app to Azure. When the deployment completes.
+
+![Last step](publish-to-azure-webapp-using-vs/_static/pp_publish.png)
+
+The app is opened in a browser. Register a new user and log in as the new user to validate the database deployment and run-time connection.
 
 ### Update the app
 
-* Edit the *Pages/About.cshtml* Razor page and change its contents. For example, you can modify the paragraph to say "Hello ASP.NET Core!":
-    [!code-html[About](publish-to-azure-webapp-using-vs/sample/about.cshtml?highlight=9&range=1-9)]
+* Edit the `Pages/Index.cshtml` Razor page and change its contents, then save the changes. For example, you can modify the paragraph to say "Hello ASP.NET Core!":
 
-* Right-click on the project and select **Publish...** again.
+    [!code-html[Index](publish-to-azure-webapp-using-vs/sample/index.cshtml?highlight=10&range=1-12)]
 
-![Contextual menu open with Publish link highlighted](publish-to-azure-webapp-using-vs/_static/pub.png)
+* Select **Publish** from the **Publish Profile summary** page again.
 
-* After the app is published, verify the changes you made are available on Azure.
+![Publish profile summary page](publish-to-azure-webapp-using-vs/_static/pp_publish.png)
+
+* After the app is published, refresh the page and verify that the changes you made are available on Azure.
 
 ![Verify task is complete](publish-to-azure-webapp-using-vs/_static/final.png)
 
@@ -167,19 +185,16 @@ When you have finished testing the app, go to the [Azure portal](https://portal.
 
 ![Azure Portal: Resource Groups in sidebar menu](publish-to-azure-webapp-using-vs/_static/portalrg.png)
 
-* In the **Resource groups** page, select **Delete**.
+* In the **Resource group** page, select **Delete resource group**.
 
-![Azure Portal: Resource Groups page](publish-to-azure-webapp-using-vs/_static/rgd.png)
+![Azure Portal: Resource Groups page](publish-to-azure-webapp-using-vs/_static/rdg.png)
 
 * Enter the name of the resource group and select **Delete**. Your app and all other resources created in this tutorial are now deleted from Azure.
 
-### Next steps
-
-* <xref:host-and-deploy/azure-apps/azure-continuous-deployment>
-
-## Additonal resources
+## Additional resources
 
 * [Azure App Service](/azure/app-service/app-service-web-overview)
 * [Azure resource groups](/azure/azure-resource-manager/resource-group-overview#resource-groups)
 * [Azure SQL Database](/azure/sql-database/)
-* <xref:host-and-deploy/azure-apps/troubleshoot>
+* <xref:host-and-deploy/visual-studio-publish-profiles>
+* <xref:test/troubleshoot-azure-iis>

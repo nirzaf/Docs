@@ -1,0 +1,3 @@
+# ASP.NET Core Middleware Extensibility Sample
+
+This sample illustrates the use of [IMiddleware](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.imiddleware) and [IMiddlewareFactory](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.http.imiddlewarefactory) with a third-party dependency injection container, [Simple Injector](https://simpleinjector.org). This sample demonstrates the features described in [Middleware activation with a third-party container in ASP.NET Core](https://learn.microsoft.com/aspnet/core/fundamentals/middleware/extensibility-third-party-container).

@@ -1,4 +1,4 @@
-﻿#define UseOptions // or NoOptions
+﻿#define UseOptions // or NoOptions or UseOptionsAO
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Debug;
 
 namespace EchoApp
 {
@@ -20,47 +22,67 @@ namespace EchoApp
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddLogging(builder =>
+            {
+                builder.AddConsole()
+                    .AddDebug()
+                    .AddFilter<ConsoleLoggerProvider>(category: null, level: LogLevel.Debug)
+                    .AddFilter<DebugLoggerProvider>(category: null, level: LogLevel.Debug);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(LogLevel.Debug);
-            loggerFactory.AddDebug(LogLevel.Debug);
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
 #if NoOptions
-            #region UseWebSockets
+            // <snippet_UseWebSockets>
             app.UseWebSockets();
-            #endregion
+            // </snippet_UseWebSockets>
 #endif
 #if UseOptions
-            #region UseWebSocketsOptions
+            // <snippet_UseWebSocketsOptions>
             var webSocketOptions = new WebSocketOptions()
             {
                 KeepAliveInterval = TimeSpan.FromSeconds(120),
-                ReceiveBufferSize = 4 * 1024
             };
+
             app.UseWebSockets(webSocketOptions);
-            #endregion
+            // </snippet_UseWebSocketsOptions>
 #endif
-            #region AcceptWebSocket
+
+#if UseOptionsAO
+            // <snippet_UseWebSocketsOptionsAO>
+            var webSocketOptions = new WebSocketOptions()
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120),
+            };
+            webSocketOptions.AllowedOrigins.Add("https://client.com");
+            webSocketOptions.AllowedOrigins.Add("https://www.client.com");
+
+            app.UseWebSockets(webSocketOptions);
+            // </snippet_UseWebSocketsOptionsAO>
+#endif
+
+            // <snippet_AcceptWebSocket>
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path == "/ws")
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
-                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await Echo(context, webSocket);
+                        using (WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync())
+                        {
+                            await Echo(context, webSocket);
+                        }
                     }
                     else
                     {
-                        context.Response.StatusCode = 400;
+                        context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
                     }
                 }
                 else
@@ -69,10 +91,10 @@ namespace EchoApp
                 }
 
             });
-#endregion
+            // </snippet_AcceptWebSocket>
             app.UseFileServer();
         }
-#region Echo
+        // <snippet_Echo>
         private async Task Echo(HttpContext context, WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
@@ -85,6 +107,6 @@ namespace EchoApp
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
-#endregion
+        // </snippet_Echo>
     }
 }

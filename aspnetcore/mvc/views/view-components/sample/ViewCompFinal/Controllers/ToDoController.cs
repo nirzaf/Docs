@@ -13,6 +13,10 @@ namespace ViewComponentSample.Controllers
         public ToDoController(ToDoContext context)
         {
             _ToDoContext = context;
+
+            // EnsureCreated() is used to call OnModelCreating for In-Memory databases as migration is not possible
+            // see: https://github.com/aspnet/EntityFrameworkCore/issues/11666 
+            _ToDoContext.Database.EnsureCreated();
         }
 
         public IActionResult Index()
@@ -33,6 +37,10 @@ namespace ViewComponentSample.Controllers
         }
 
         public IActionResult IndexNameof()
+        {
+            return View(_ToDoContext.ToDo.ToList());
+        }
+        public IActionResult IndexTypeof()
         {
             return View(_ToDoContext.ToDo.ToList());
         }

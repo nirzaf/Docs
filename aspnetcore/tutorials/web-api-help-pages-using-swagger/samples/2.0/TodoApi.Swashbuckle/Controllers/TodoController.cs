@@ -1,17 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using TodoApi.Models;
 
 namespace TodoApi.Controllers
 {
-#region snippet_TodoController
+    // <snippet_TodoController>
     [Produces("application/json")]
     [Route("api/[controller]")]
     public class TodoController : ControllerBase
     {
         private readonly TodoContext _context;
-#endregion
+        // </snippet_TodoController>
 
         public TodoController(TodoContext context)
         {
@@ -24,16 +25,16 @@ namespace TodoApi.Controllers
             }
         }
 
-        #region snippet_GetAll
+        // <snippet_GetAll>
         [HttpGet]
         [Produces("application/json", Type = typeof(TodoItem))]
         public List<TodoItem> GetAll()
         {
             return _context.TodoItems.ToList();
         }
-        #endregion
+        // </snippet_GetAll>
 
-        #region snippet_GetById
+        // <snippet_GetById>
         [HttpGet("{id}", Name = "GetTodo")]
         [Produces("application/json", Type = typeof(TodoItem))]
         public IActionResult GetById(long id)
@@ -47,9 +48,9 @@ namespace TodoApi.Controllers
 
             return Ok(item);
         }
-        #endregion
+        // </snippet_GetById>
         
-        #region snippet_Create
+        // <snippet_Create>
         /// <summary>
         /// Creates a TodoItem.
         /// </summary>
@@ -69,8 +70,8 @@ namespace TodoApi.Controllers
         /// <response code="201">Returns the newly created item</response>
         /// <response code="400">If the item is null</response>            
         [HttpPost]
-        [ProducesResponseType(typeof(TodoItem), 201)]
-        [ProducesResponseType(400)]
+        [ProducesResponseType(typeof(TodoItem), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Create([FromBody] TodoItem item)
         {
             if (item == null)
@@ -83,9 +84,9 @@ namespace TodoApi.Controllers
 
             return CreatedAtRoute("GetTodo", new { id = item.Id }, item);
         }
-        #endregion
+        // </snippet_Create>
 
-        #region snippet_Update
+        // <snippet_Update>
         [HttpPut("{id}")]
         public IActionResult Update(long id, [FromBody] TodoItem item)
         {
@@ -109,9 +110,9 @@ namespace TodoApi.Controllers
 
             return NoContent();
         }
-        #endregion
+        // </snippet_Update>
 
-        #region snippet_Delete
+        // <snippet_Delete>
         /// <summary>
         /// Deletes a specific TodoItem.
         /// </summary>
@@ -131,6 +132,6 @@ namespace TodoApi.Controllers
 
             return NoContent();
         }
-        #endregion
+        // </snippet_Delete>
     }
 }

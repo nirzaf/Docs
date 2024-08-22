@@ -1,11 +1,4 @@
-﻿//#define Map
-#if Map
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-
-#region snippet1
-public class Startup
+﻿public class Startup
 {
     private static void HandleBranch(IApplicationBuilder app)
     {
@@ -23,9 +16,7 @@ public class Startup
 
         app.Run(async context =>
         {
-            await context.Response.WriteAsync("Hello from non-Map delegate. <p>");
+            await context.Response.WriteAsync("Hello from non-Map delegate.");
         });
     }
 }
-#endregion
-#endif

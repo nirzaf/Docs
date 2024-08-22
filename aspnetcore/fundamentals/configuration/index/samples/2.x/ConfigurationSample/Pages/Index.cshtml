@@ -16,6 +16,7 @@
             </div>
             <div class="panel-body">
                 <p>The app's configuration contains the following key-value pairs. Because the Environment Variable Configuration Provider (<code>AddEnvironmentVariables</code>) is used without a prefix filter, all of the system's environment variables are included in the app's configuration. Therefore, this Index page filters the configuration values before displaying them here.</p>
+                <p><code>Logging</code> and <code>Logging:LogLevel</code> are sections, so values aren't provided.</p>
                 <ul>
                     @foreach(var kvp in Model.FilteredConfiguration)
                     {
@@ -86,7 +87,7 @@ Starship = starship;</code></pre>
   &lt;tvshow&gt;
     &lt;metadata&gt;
       &lt;series&gt;Dr. Who&lt;/series&gt;
-      &lt;title&gt;The Sun Makers&lt;/title&gt;
+      &lt;title&gt;The Sunmakers&lt;/title&gt;
       &lt;airdate&gt;11/26/1977&lt;/airdate&gt;
       &lt;episodes&gt;4&lt;/episodes&gt;
     &lt;/metadata&gt;
@@ -142,14 +143,15 @@ TvShow = tvShow;</code></pre>
                 <h2 class="panel-title">Custom Entity Framework Configuration Provider</h2>
             </div>
             <div class="panel-body">
-                <p>This sample app demonstrates how to create a basic configuration provider, <code>EFConfigurationProviver</code>, that reads configuration key-value pairs from a database using <a href="https://docs.microsoft.com/ef/core/">Entity Framework (EF) Core</a>.</p>
+                <p>This sample app demonstrates how to create a basic configuration provider, <code>EFConfigurationProviver</code>, that reads configuration key-value pairs from a database using <a href="https://docs.microsoft.com/ef/core/">Entity Framework (EF) Core</a>. Keys are case insensitive.</p>
                 <p>The following quotes are stored in configuration using the custom provider and rendered here:</p>
                 <ul>
                     <li>Quote1: @Configuration["quote1"]</li>
                     <li>Quote2: @Configuration["quote2"]</li>
-                    <li>Quote3: @Configuration["quote3"]</li>
+                    <li>Quote3 (key: &quot;quote3&quot;): @Configuration["quote3"]</li>
+                    <li>Quote3 (key: &quot;QuOtE3&quot;): @Configuration["QuOtE3"]</li>
                 </ul>
-                <p>Quotes &copy;2005 Universal Pictures: <a href="https://www.uphe.com/movies/serenity">Serenity</a></p>
+                <p>Quotes &copy;2005 Universal Pictures: <a href="https://www.uphe.com/movies/serenity-2005">Serenity</a></p>
             </div>
         </div>
     </div>

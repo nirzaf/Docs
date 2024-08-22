@@ -70,6 +70,11 @@ namespace ContactManager.Data
 
             var user = await userManager.FindByIdAsync(uid);
 
+            if(user == null)
+            {
+                throw new Exception("The testUserPw password was probably not strong enough!");
+            }
+            
             IR = await userManager.AddToRoleAsync(user, role);
 
             return IR;
@@ -109,38 +114,38 @@ namespace ContactManager.Data
                     Status = ContactStatus.Submitted,
                     OwnerID = adminID
                 },
-             new Contact
-             {
-                 Name = "Yuhong Li",
-                 Address = "9012 State st",
-                 City = "Redmond",
-                 State = "WA",
-                 Zip = "10999",
-                 Email = "yuhong@example.com",
-                 Status = ContactStatus.Rejected,
-                 OwnerID = adminID
-             },
-             new Contact
-             {
-                 Name = "Jon Orton",
-                 Address = "3456 Maple St",
-                 City = "Redmond",
-                 State = "WA",
-                 Zip = "10999",
-                 Email = "jon@example.com",
-                 Status = ContactStatus.Submitted,
-                 OwnerID = adminID
-             },
-             new Contact
-             {
-                 Name = "Diliana Alexieva-Bosseva",
-                 Address = "7890 2nd Ave E",
-                 City = "Redmond",
-                 State = "WA",
-                 Zip = "10999",
-                 Email = "diliana@example.com",
-                 OwnerID = adminID
-             }
+                new Contact
+                {
+                    Name = "Yuhong Li",
+                    Address = "9012 State st",
+                    City = "Redmond",
+                    State = "WA",
+                    Zip = "10999",
+                    Email = "yuhong@example.com",
+                    Status = ContactStatus.Rejected,
+                    OwnerID = adminID
+                },
+                new Contact
+                {
+                    Name = "Jon Orton",
+                    Address = "3456 Maple St",
+                    City = "Redmond",
+                    State = "WA",
+                    Zip = "10999",
+                    Email = "jon@example.com",
+                    Status = ContactStatus.Submitted,
+                    OwnerID = adminID
+                },
+                new Contact
+                {
+                    Name = "Diliana Alexieva-Bosseva",
+                    Address = "7890 2nd Ave E",
+                    City = "Redmond",
+                    State = "WA",
+                    Zip = "10999",
+                    Email = "diliana@example.com",
+                    OwnerID = adminID
+                }
              );
             context.SaveChanges();
         }

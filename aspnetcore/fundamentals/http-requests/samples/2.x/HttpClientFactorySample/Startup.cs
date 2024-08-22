@@ -1,15 +1,14 @@
-using System;
-using System.Net.Http;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using HttpClientFactorySample.GitHub;
 using HttpClientFactorySample.Handlers;
 using HttpClientFactorySample.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Polly;
+using System;
+using System.Net.Http;
 
 namespace HttpClientFactorySample
 {
@@ -24,19 +23,13 @@ namespace HttpClientFactorySample
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
-
             // basic usage
-            #region snippet1
+            // <snippet1>
             services.AddHttpClient();
-            #endregion
+            // </snippet1>
 
             // named client
-            #region snippet2
+            // <snippet2>
             services.AddHttpClient("github", c =>
             {
                 c.BaseAddress = new Uri("https://api.github.com/");
@@ -45,24 +38,24 @@ namespace HttpClientFactorySample
                 // Github requires a user-agent
                 c.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
             });
-            #endregion
+            // </snippet2>
 
             // typed client where configuration occurs in ctor
-            #region snippet3
+            // <snippet3>
             services.AddHttpClient<GitHubService>();
-            #endregion
+            // </snippet3>
 
             // typed client where configuration occurs during registration
-            #region snippet4
+            // <snippet4>
             services.AddHttpClient<RepoService>(c =>
             {
                 c.BaseAddress = new Uri("https://api.github.com/");
                 c.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
                 c.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
             });
-            #endregion
+            // </snippet4>
 
-            #region snippet5
+            // <snippet5>
             services.AddTransient<ValidateHeaderHandler>();
 
             services.AddHttpClient("externalservice", c =>
@@ -71,9 +64,9 @@ namespace HttpClientFactorySample
                 c.BaseAddress = new Uri("https://localhost:5000/");
             })
             .AddHttpMessageHandler<ValidateHeaderHandler>();
-            #endregion
+            // </snippet5>
 
-            #region snippet6
+            // <snippet6>
             services.AddTransient<SecureRequestHandler>();
             services.AddTransient<RequestDataHandler>();
 
@@ -84,15 +77,15 @@ namespace HttpClientFactorySample
                 // This handler is on the inside, closest to the request being 
                 // sent.
                 .AddHttpMessageHandler<RequestDataHandler>();
-            #endregion
+            // </snippet6>
 
-            #region snippet7
+            // <snippet7>
             services.AddHttpClient<UnreliableEndpointCallerService>()
                 .AddTransientHttpErrorPolicy(p => 
                     p.WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(600)));
-            #endregion
+            // </snippet7>
 
-            #region snippet8
+            // <snippet8>
             var timeout = Policy.TimeoutAsync<HttpResponseMessage>(
                 TimeSpan.FromSeconds(10));
             var longTimeout = Policy.TimeoutAsync<HttpResponseMessage>(
@@ -102,16 +95,16 @@ namespace HttpClientFactorySample
             // Run some code to select a policy based on the request
                 .AddPolicyHandler(request => 
                     request.Method == HttpMethod.Get ? timeout : longTimeout);
-            #endregion
+            // </snippet8>
 
-            #region snippet9
+            // <snippet9>
             services.AddHttpClient("multiplepolicies")
                 .AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
                 .AddTransientHttpErrorPolicy(
                     p => p.CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
-            #endregion
+            // </snippet9>
 
-            #region snippet10
+            // <snippet10>
             var registry = services.AddPolicyRegistry();
 
             registry.Add("regular", timeout);
@@ -119,14 +112,14 @@ namespace HttpClientFactorySample
             
             services.AddHttpClient("regulartimeouthandler")
                 .AddPolicyHandlerFromRegistry("regular");
-            #endregion
+            // </snippet10>
 
-            #region snippet11
+            // <snippet11>
             services.AddHttpClient("extendedhandlerlifetime")
                 .SetHandlerLifetime(TimeSpan.FromMinutes(5));
-            #endregion
+            // </snippet11>
 
-            #region snippet12
+            // <snippet12>
             services.AddHttpClient("configured-inner-handler")
                 .ConfigurePrimaryHttpMessageHandler(() =>
                 {
@@ -136,9 +129,20 @@ namespace HttpClientFactorySample
                         UseDefaultCredentials = true
                     };
                 });
-            #endregion
+            // </snippet12>
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            // <snippet13>
+            services.AddHttpClient("configured-disable-automatic-cookies")
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    return new HttpClientHandler()
+                    {
+                        UseCookies = false,
+                    };
+                });
+            // </snippet13>
+
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
         
         // This method gets called by the runtime. Use this method to configure 
@@ -152,12 +156,8 @@ namespace HttpClientFactorySample
             else
             {
                 app.UseExceptionHandler("/Error");
-                app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseCookiePolicy();
             app.UseMvc();
         }
     }

@@ -1,34 +1,38 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ViewComponentSample.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace ViewComponentSample
 {
     public class Startup
-    {
+    { 
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ToDoContext>(options =>
-                   options.UseInMemoryDatabase("db"));
-            services.AddMvc();
+                    options.UseInMemoryDatabase("db"));
+
+            services.AddControllersWithViews();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            
             app.UseStaticFiles();
 
-            app.UseMvc(routes =>
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "default",
-                    template: "{controller=Todo}/{action=Index}/{id?}");
+                    pattern: "{controller=Todo}/{action=Index}/{id?}");
             });
         }
     }

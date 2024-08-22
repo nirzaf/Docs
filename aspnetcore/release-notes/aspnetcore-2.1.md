@@ -1,10 +1,10 @@
 ---
 title: What's new in ASP.NET Core 2.1
-author: isaac2004
+author: isaacrlevin
 description: Learn about the new features in ASP.NET Core 2.1.
 ms.author: riande
 ms.custom: mvc
-ms.date: 05/30/2018
+ms.date: 02/06/2023
 uid: aspnetcore-2.1
 ---
 # What's new in ASP.NET Core 2.1
@@ -13,7 +13,9 @@ This article highlights the most significant changes in ASP.NET Core 2.1, with l
 
 ## SignalR
 
-SignalR has been rewritten for ASP.NET Core 2.1. ASP.NET Core SignalR includes a number of improvements:
+SignalR has been rewritten for ASP.NET Core 2.1.
+
+ASP.NET Core SignalR includes a number of improvements:
 
 * A simplified scale-out model.
 * A new JavaScript client with no jQuery dependency.
@@ -22,7 +24,7 @@ SignalR has been rewritten for ASP.NET Core 2.1. ASP.NET Core SignalR includes a
 * A new streaming response model.
 * Support for clients based on bare WebSockets.
 
-For more information, see [ASP.NET Core SignalR](xref:signalr/index).
+For more information, see [ASP.NET Core SignalR](xref:signalr/introduction).
 
 ## Razor class libraries
 
@@ -43,7 +45,7 @@ For more information, see [Scaffold Identity in ASP.NET Core projects](xref:secu
 
 ## HTTPS
 
-With the increased focus on security and privacy, enabling HTTPS for web apps is important. HTTPS enforcement is becoming increasingly strict on the web. Sites that don’t use HTTPS are considered insecure. Browsers (Chromium, Mozilla) are starting to enforce that web features must be used from a secure context. [GDPR](xref:security/gdpr) requires the use of HTTPS to protect user privacy. While using HTTPS in production is critical, using HTTPS in development can help prevent issues in deployment (for example, insecure links). ASP.NET Core 2.1 includes a number of improvements that make it easier to use HTTPS in development and to configure HTTPS in production. For more information, see [Enforce HTTPS](xref:security/enforcing-ssl).
+With the increased focus on security and privacy, enabling HTTPS for web apps is important. HTTPS enforcement is becoming increasingly strict on the web. Sites that don't use HTTPS are considered insecure. Browsers (Chromium, Mozilla) are starting to enforce that web features must be used from a secure context. [GDPR](xref:security/gdpr) requires the use of HTTPS to protect user privacy. While using HTTPS in production is critical, using HTTPS in development can help prevent issues in deployment (for example, insecure links). ASP.NET Core 2.1 includes a number of improvements that make it easier to use HTTPS in development and to configure HTTPS in production. For more information, see [Enforce HTTPS](xref:security/enforcing-ssl).
 
 ### On by default
 
@@ -69,7 +71,7 @@ In production, HTTPS must be explicitly configured. In 2.1, default configuratio
 
 ## GDPR
 
-ASP.NET Core provides APIs and templates to help meet some of the [EU General Data Protection Regulation (GDPR)](https://www.eugdpr.org/) requirements. For more information, see [GDPR support in ASP.NET Core](xref:security/gdpr). A [sample app](https://github.com/aspnet/Docs/tree/live/aspnetcore/security/gdpr/sample) shows how to use and lets you test most of the GDPR extension points and APIs added to the ASP.NET Core 2.1 templates.
+ASP.NET Core provides APIs and templates to help meet some of the [EU General Data Protection Regulation (GDPR)](https://gdpr.eu) requirements. For more information, see [GDPR support in ASP.NET Core](xref:security/gdpr). A [sample app](https://github.com/dotnet/AspNetCore.Docs/tree/live/aspnetcore/security/gdpr/sample) shows how to use and lets you test most of the GDPR extension points and APIs added to the ASP.NET Core 2.1 templates.
 
 ## Integration tests
 
@@ -77,9 +79,9 @@ A new package is introduced that streamlines test creation and execution. The [M
 
 * Copies the dependency file (*\*.deps*) from the tested app into the test project's *bin* folder.
 * Sets the content root to the tested app's project root so that static files and pages/views are found when the tests are executed.
-* Provides the [WebApplicationFactory](/dotnet/api/microsoft.aspnetcore.mvc.testing.webapplicationfactory-1) class to streamline bootstrapping the tested app with [TestServer](/dotnet/api/microsoft.aspnetcore.testhost.testserver).
+* Provides the <xref:Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory%601> class to streamline bootstrapping the tested app with <xref:Microsoft.AspNetCore.TestHost.TestServer>.
 
-The following test uses [xUnit](https://xunit.github.io/) to check that the Index page loads with a success status code and with the correct Content-Type header:
+The following test uses [xUnit](https://github.com/xunit/xunit) to check that the Index page loads with a success status code and with the correct Content-Type header:
 
 ```csharp
 public class BasicTests
@@ -123,9 +125,9 @@ ASP.NET Core 2.1 includes a new `IHttpClientFactory` service that makes it easie
 
 For more information, see [Initiate HTTP Requests](xref:fundamentals/http-requests).
 
-## Kestrel transport configuration
+## Kestrel libuv transport configuration
 
-With the release of ASP.NET Core 2.1, Kestrel's default transport is no longer based on Libuv but instead based on managed sockets. For more information, see [Kestrel web server implementation: Transport configuration](xref:fundamentals/servers/kestrel#transport-configuration).
+With the release of ASP.NET Core 2.1, Kestrel's default transport is no longer based on Libuv but instead based on managed sockets. For more information, see [Kestrel web server implementation: Libuv transport configuration](xref:fundamentals/servers/kestrel#libuv-transport-configuration).
 
 ## Generic host builder
 
@@ -135,10 +137,14 @@ For more information, see [.NET Generic Host](xref:fundamentals/host/generic-hos
 
 ## Updated SPA templates
 
-The Single Page Application templates for Angular, React, and React with Redux are updated to use the standard project structures and build systems for each framework.
+The Single Page Application templates for Angular and React are updated to use the standard project structures and build systems for each framework.
 
-The Angular template is based on the Angular CLI, and the React templates are based on create-react-app.
-For more information, see [Use the Single Page Application templates with ASP.NET Core](xref:spa/index).
+The Angular template is based on the Angular CLI, and the React template is based on create-react-app.
+
+For more information, see:
+
+* <xref:spa/angular>
+* <xref:spa/react>
 
 ## Razor Pages search for Razor assets
 
@@ -154,7 +160,7 @@ Razor Pages now support [areas](xref:mvc/controllers/areas). To see an example o
 
 ## MVC compatibility version
 
-The <xref:Microsoft.Extensions.DependencyInjection.MvcCoreMvcBuilderExtensions.SetCompatibilityVersion*> method allows an app to opt-in or opt-out of potentially breaking behavior changes introduced in ASP.NET Core MVC 2.1 or later.
+The <xref:Microsoft.Extensions.DependencyInjection.MvcCoreMvcBuilderExtensions.SetCompatibilityVersion%2A> method allows an app to opt-in or opt-out of potentially breaking behavior changes introduced in ASP.NET Core MVC 2.1 or later.
 
 For more information, see <xref:mvc/compatibility-version>.
 
@@ -164,4 +170,4 @@ See [Migrate from ASP.NET Core 2.0 to 2.1](xref:migration/20_21).
 
 ## Additional information
 
-For the complete list of changes, see the [ASP.NET Core 2.1 Release Notes](https://github.com/aspnet/Home/releases/tag/2.1.0).
+For the complete list of changes, see the [ASP.NET Core 2.1 Release Notes](https://github.com/dotnet/aspnetcore/releases/tag/2.1.0).

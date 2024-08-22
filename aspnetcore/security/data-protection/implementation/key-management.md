@@ -23,7 +23,7 @@ The data protection system automatically manages the lifetime of master keys use
 Created, active, and expired keys may all be used to unprotect incoming payloads. Revoked keys by default may not be used to unprotect payloads, but the application developer can [override this behavior](xref:security/data-protection/consumer-apis/dangerous-unprotect#data-protection-consumer-apis-dangerous-unprotect) if necessary.
 
 >[!WARNING]
-> The developer might be tempted to delete a key from the key ring (e.g., by deleting the corresponding file from the file system). At that point, all data protected by the key is permanently undecipherable, and there's no emergency override like there's with revoked keys. Deleting a key is truly destructive behavior, and consequently the data protection system exposes no first-class API for performing this operation.
+> The developer might be tempted to delete a key from the key ring (e.g., by deleting the corresponding file from the file system). At that point, all data protected by the key is permanently undecipherable, and there's no emergency override like there's with revoked keys. Deleting a key is truly destructive behavior.
 
 ## Default key selection
 
@@ -69,6 +69,8 @@ Any operation which modifies the key ring (creating a new key explicitly or perf
 The sample below demonstrates using the `IKeyManager` interface to inspect and manipulate the key ring, including revoking existing keys and generating a new key manually.
 
 [!code-csharp[](key-management/samples/key-management.cs)]
+
+[!INCLUDE[about the series](~/includes/code-comments-loc.md)]
 
 ## Key storage
 

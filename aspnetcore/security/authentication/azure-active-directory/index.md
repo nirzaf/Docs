@@ -1,28 +1,25 @@
 ---
-title: Azure Active Directory with ASP.NET Core
+title: Microsoft identity platform and Microsoft Entra ID with ASP.NET Core
 author: rick-anderson
-description: Discover Azure Active Directory topics related to ASP.NET Core.
+description: Discover topics related to authentication with Microsoft identity platform Microsoft Entra ID for web apps and APIs in ASP.NET Core.
 ms.author: riande
-ms.date: 10/4/2017
+ms.date: 01/21/2020
+ms.custom: mvc
 uid: security/authentication/azure-active-directory/index
 ---
-# Azure Active Directory with ASP.NET Core
+# Microsoft Entra ID with ASP.NET Core
 
-## Azure AD V1 samples
-The following samples show how to integrate Azure AD V1, enabling users to sign-in with a work and school account:
-* [Integrating Azure AD Into an ASP.NET Core Web App](https://azure.microsoft.com/documentation/samples/active-directory-dotnet-webapp-openidconnect-aspnetcore/)
-* [Calling a ASP.NET Core Web API From a WPF Application Using Azure AD](https://azure.microsoft.com/documentation/samples/active-directory-dotnet-native-aspnetcore/)
-* [Calling a Web API in an ASP.NET Core Web Application Using Azure AD](https://azure.microsoft.com/documentation/samples/active-directory-dotnet-webapp-webapi-openidconnect-aspnetcore/)
+These tutorials and samples demonstrate authentication in ASP.NET Core using Microsoft identity platform and Microsoft Entra ID. For additional tutorials and samples using ASP.NET Core with Azure AD, see [Microsoft identity platform](/azure/active-directory/develop/).
 
-## Azure AD V2 samples
-The following samples show how to integrate Azure AD V2, enabling users to sign-in with a work and school account or a Microsoft personal account (formely Live account):
-* [Integrating Azure AD V2 into an ASP.NET Core 2.0 web app](https://github.com/Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2): 
-  * See [this associated video](https://channel9.msdn.com/Events/Build/2018/THR5001) 
+## Application Scenarios
 
-* [Calling a ASP.NET Core 2.0 Web API from a WPF application using Azure AD V2](https://github.com/azure-samples/active-directory-dotnet-native-aspnetcore-v2): 
-  * See [this associated video](https://channel9.msdn.com/Events/Build/2018/THR5000)
+* [Quickstart: Add sign-in with Microsoft to an ASP.NET Core web app](/azure/active-directory/develop/web-app-quickstart?pivots=devlang-aspnet-core&tabs=windows)
+* [Web app that signs in users](/azure/active-directory/develop/scenario-web-app-sign-user-overview?tabs=aspnetcore)
+* [Web app that calls web APIs](/azure/active-directory/develop/scenario-web-app-call-api-overview)
+* [Protected web API](/azure/active-directory/develop/scenario-protected-web-api-overview)
+* [Web API that calls other web APIs](/azure/active-directory/develop/scenario-web-api-call-api-overview)
+* [Web app that signs in users with Azure AD B2C](xref:security/authentication/azure-ad-b2c) <!-- Azure AD B2C excluded -->
 
-## Azure AD B2C sample
-This sample shows how to integrate Azure AD B2C, enabling users to sign-in with social identities (like Facebook, Google, ...)
-* [An ASP.NET Core web API with Azure AD B2C](https://azure.microsoft.com/resources/samples/active-directory-b2c-dotnetcore-webapi/)
+## Samples
 
+* [Enable your ASP.NET Core app to sign-in users and call web APIs using Microsoft identity platform for developers](https://github.com/Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2/)

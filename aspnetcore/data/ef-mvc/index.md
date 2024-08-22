@@ -1,12 +1,18 @@
 ---
 title: ASP.NET Core MVC with EF Core - tutorial series
-author: rick-anderson
-description: 
+author: tdykstra
+description: List of topics in ASP.NET Core MVC with EF Core
 ms.author: tdykstra
-ms.date: 10/15/2017
+ms.date: 03/27/2017
 uid: data/ef-mvc/index
 ---
 # ASP.NET Core MVC with EF Core - tutorial series
+
+:::moniker range=">= aspnetcore-3.0 < aspnetcore-5.0"
+
+This tutorial has **not** been updated to ASP.NET Core 3.0. It has been updated for ASP.NET Core 5.0.
+
+:::moniker-end
 
 [!INCLUDE [RP better than MVC](../../includes/RP-EF/rp-over-mvc.md)]
 

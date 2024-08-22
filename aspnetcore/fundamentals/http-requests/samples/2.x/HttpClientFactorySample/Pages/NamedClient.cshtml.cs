@@ -5,11 +5,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using HttpClientFactorySample.GitHub;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Newtonsoft.Json;
 
 namespace HttpClientFactorySample.Pages
 {
-    #region snippet1
+    // <snippet1>
     public class NamedClientModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -28,7 +27,7 @@ namespace HttpClientFactorySample.Pages
         public async Task OnGet()
         {
             var request = new HttpRequestMessage(HttpMethod.Get, 
-                "repos/aspnet/docs/pulls");
+                "repos/dotnet/AspNetCore.Docs/pulls");
 
             var client = _clientFactory.CreateClient("github");
 
@@ -46,5 +45,5 @@ namespace HttpClientFactorySample.Pages
             }
         }
     }
-    #endregion
+    // </snippet1>
 }

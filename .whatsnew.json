@@ -1,0 +1,100 @@
+{
+  "$schema": "https://whatsnewapi.azurewebsites.net/schema",
+  "docSetProductName": "ASP.NET Core",
+  "rootDirectory": "aspnetcore/",
+  "docLinkSettings": {
+    "linkFormat": "xref"
+  },
+  "navigationOptions": {
+    "maximumNumberOfArticles": 6,
+    "tocParentNode": "What's new",
+    "repoTocFolder": "aspnetcore/whats-new",
+    "indexParentNode": "Find ASP.NET Core docs updates",
+    "repoIndexFolder": "aspnetcore/whats-new"
+  },
+  "inclusionCriteria": {
+    "minAdditionsToFile": 3
+  },
+  "areas": [
+    {
+      "names": ["."],
+      "heading": "Miscellaneous"
+    },
+    {
+      "names": ["azure"],
+      "heading": "Azure"
+    },
+    {
+      "names": ["blazor"],
+      "heading": "Blazor"
+    },
+    {
+      "names": ["client-side"],
+      "heading": "Client-side development"
+    },
+    {
+      "names": ["data"],
+      "heading": "Data access"
+    },
+    {
+      "names": ["fundamentals"],
+      "heading": "Fundamentals"
+    },
+    {
+      "names": ["getting-started"],
+      "heading": "Getting started"
+    },
+    {
+      "names": ["grpc"],
+      "heading": "gRPC"
+    },
+    {
+      "names": ["host-and-deploy"],
+      "heading": "Hosting and deployment"
+    },
+    {
+      "names": ["migration"],
+      "heading": "Migration"
+    },
+    {
+      "names": ["mobile"],
+      "heading": "Mobile development"
+    },
+    {
+      "names": ["mvc"],
+      "heading": "MVC"
+    },
+    {
+      "names": ["performance"],
+      "heading": "Performance"
+    },
+    {
+      "names": ["razor-pages"],
+      "heading": "Razor Pages"
+    },
+    {
+      "names": ["release-notes"],
+      "heading": "Release notes"
+    },
+    {
+      "names": ["security"],
+      "heading": "Security"
+    },
+    {
+      "names": ["signalr"],
+      "heading": "SignalR"
+    },
+    {
+      "names": ["test"],
+      "heading": "Testing"
+    },
+    {
+      "names": ["tutorials"],
+      "heading": "Tutorials"
+    },
+    {
+      "names": ["web-api"],
+      "heading": "Web API"
+    }
+  ]
+}

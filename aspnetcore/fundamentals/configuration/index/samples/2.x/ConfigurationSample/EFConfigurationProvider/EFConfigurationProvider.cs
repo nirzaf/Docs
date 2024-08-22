@@ -38,8 +38,9 @@ namespace ConfigurationSample.EFConfigurationProvider
             EFConfigurationContext dbContext)
         {
             // Quotes (c)2005 Universal Pictures: Serenity
-            // https://www.uphe.com/movies/serenity
-            var configValues = new Dictionary<string, string>
+            // https://www.uphe.com/movies/serenity-2005
+            var configValues = 
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     { "quote1", "I aim to misbehave." },
                     { "quote2", "I swallowed a bug." },

@@ -1,37 +1,40 @@
-﻿#define UseDbSet // or UseRawSQL
+#define UseDbSet // or UseRawSQL
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-#region snippet_Usings2
+// <snippet_Usings2>
 using System.Data.Common;
-#endregion
-#region snippet_Usings1
+// </snippet_Usings2>
+// <snippet_Usings1>
 using Microsoft.EntityFrameworkCore;
 using ContosoUniversity.Data;
 using ContosoUniversity.Models.SchoolViewModels;
-#endregion
+using Microsoft.Extensions.Logging;
+// </snippet_Usings1>
 
 namespace ContosoUniversity.Controllers
 {
-    #region snippet_AddContext
+// <snippet_AddContext>
     public class HomeController : Controller
     {
+        private readonly ILogger<HomeController> _logger;
         private readonly SchoolContext _context;
 
-        public HomeController(SchoolContext context)
+        public HomeController(ILogger<HomeController> logger, SchoolContext context)
         {
+            _logger = logger;
             _context = context;
         }
-        #endregion
+// </snippet_AddContext>
         public IActionResult Index()
         {
             return View();
         }
 
 #if UseDbSet
-        #region snippet_UseDbSet
+// <snippet_UseDbSet>
         public async Task<ActionResult> About()
         {
             IQueryable<EnrollmentDateGroup> data = 
@@ -44,9 +47,9 @@ namespace ContosoUniversity.Controllers
                 };
             return View(await data.AsNoTracking().ToListAsync());
         }
-        #endregion
+// </snippet_UseDbSet>
 #elif UseRawSQL
-        #region snippet_UseRawSQL
+// <snippet_UseRawSQL>
         public async Task<ActionResult> About()
         {
             List<EnrollmentDateGroup> groups = new List<EnrollmentDateGroup>();
@@ -80,7 +83,7 @@ namespace ContosoUniversity.Controllers
             }
             return View(groups);
         }
-        #endregion
+// </snippet_UseRawSQL>
 #endif
         public IActionResult Contact()
         {

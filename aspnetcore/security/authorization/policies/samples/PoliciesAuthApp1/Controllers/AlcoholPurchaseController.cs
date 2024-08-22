@@ -1,15 +1,13 @@
 namespace PoliciesAuthApp1.Controllers
 {
-    #region snippet_AlcoholPurchaseControllerClass
+    // <snippet_AlcoholPurchaseControllerClass>
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     [Authorize(Policy = "AtLeast21")]
     public class AlcoholPurchaseController : Controller
     {
-        public IActionResult Login() => View();
-
-        public IActionResult Logout() => View();
+        public IActionResult Index() => View();
     }
-    #endregion
+    // </snippet_AlcoholPurchaseControllerClass>
 }

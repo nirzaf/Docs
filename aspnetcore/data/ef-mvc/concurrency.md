@@ -1,30 +1,40 @@
 ---
-title: ASP.NET Core MVC with EF Core - Concurrency - 8 of 10
-author: rick-anderson
-description: This tutorial shows how to handle conflicts when multiple users update the same entity at the same time.
+title: "Tutorial: Handle concurrency - ASP.NET MVC with EF Core"
+description: "This tutorial shows how to handle conflicts when multiple users update the same entity at the same time."
+author: tdykstra
 ms.author: tdykstra
 ms.custom: mvc
-ms.date: 10/24/2018
+ms.date: 03/27/2019
+ms.topic: tutorial
 uid: data/ef-mvc/concurrency
 ---
 
-# ASP.NET Core MVC with EF Core - Concurrency - 8 of 10
-
-[!INCLUDE [RP better than MVC](~/includes/RP-EF/rp-over-mvc-21.md)]
-
-::: moniker range="= aspnetcore-2.0"
-
-By [Tom Dykstra](https://github.com/tdykstra) and [Rick Anderson](https://twitter.com/RickAndMSFT)
-
-The Contoso University sample web application demonstrates how to create ASP.NET Core MVC web applications using Entity Framework Core and Visual Studio. For information about the tutorial series, see [the first tutorial in the series](intro.md).
+# Tutorial: Handle concurrency - ASP.NET MVC with EF Core
 
 In earlier tutorials, you learned how to update data. This tutorial shows how to handle conflicts when multiple users update the same entity at the same time.
 
-You'll create web pages that work with the Department entity and handle concurrency errors. The following illustrations show the Edit and Delete pages, including some messages that are displayed if a concurrency conflict occurs.
+You'll create web pages that work with the `Department` entity and handle concurrency errors. The following illustrations show the Edit and Delete pages, including some messages that are displayed if a concurrency conflict occurs.
 
 ![Department Edit page](concurrency/_static/edit-error.png)
 
 ![Department Delete page](concurrency/_static/delete-error.png)
+
+In this tutorial, you:
+
+> [!div class="checklist"]
+> * Learn about concurrency conflicts
+> * Add a tracking property
+> * Create Departments controller and views
+> * Update Index view
+> * Update Edit methods
+> * Update Edit view
+> * Test concurrency conflicts
+> * Update the Delete page
+> * Update Details and Create views
+
+## Prerequisites
+
+* [Update related data](update-related-data.md)
 
 ## Concurrency conflicts
 
@@ -82,64 +92,64 @@ You can resolve conflicts by handling `DbConcurrencyException` exceptions that t
 
 In the remainder of this tutorial you'll add a `rowversion` tracking property to the Department entity, create a controller and views, and test to verify that everything works correctly.
 
-## Add a tracking property to the Department entity
+## Add a tracking property
 
-In *Models/Department.cs*, add a tracking property named RowVersion:
+In `Models/Department.cs`, add a tracking property named RowVersion:
 
 [!code-csharp[](intro/samples/cu/Models/Department.cs?name=snippet_Final&highlight=26,27)]
 
 The `Timestamp` attribute specifies that this column will be included in the Where clause of Update and Delete commands sent to the database. The attribute is called `Timestamp` because previous versions of SQL Server used a SQL `timestamp` data type before the SQL `rowversion` replaced it. The .NET type for `rowversion` is a byte array.
 
-If you prefer to use the fluent API, you can use the `IsConcurrencyToken` method (in *Data/SchoolContext.cs*) to specify the tracking property, as shown in the following example:
+If you prefer to use the fluent API, you can use the `IsRowVersion()` method (in `Data/SchoolContext.cs`) to specify the tracking property, as shown in the following example:
 
 ```csharp
 modelBuilder.Entity<Department>()
-    .Property(p => p.RowVersion).IsConcurrencyToken();
+    .Property(p => p.RowVersion).IsRowVersion();
 ```
 
 By adding a property you changed the database model, so you need to do another migration.
 
 Save your changes and build the project, and then enter the following commands in the command window:
 
-```console
+```dotnetcli
 dotnet ef migrations add RowVersion
 ```
 
-```console
+```dotnetcli
 dotnet ef database update
 ```
 
-## Create a Departments controller and views
+## Create Departments controller and views
 
 Scaffold a Departments controller and views as you did earlier for Students, Courses, and Instructors.
 
 ![Scaffold Department](concurrency/_static/add-departments-controller.png)
 
-In the *DepartmentsController.cs* file, change all four occurrences of "FirstMidName" to "FullName" so that the department administrator drop-down lists will contain the full name of the instructor rather than just the last name.
+In the `DepartmentsController.cs` file, change all four occurrences of "FirstMidName" to "FullName" so that the department administrator drop-down lists will contain the full name of the instructor rather than just the last name.
 
 [!code-csharp[](intro/samples/cu/Controllers/DepartmentsController.cs?name=snippet_Dropdown)]
 
-## Update the Departments Index view
+## Update Index view
 
-The scaffolding engine created a RowVersion column in the Index view, but that field shouldn't be displayed.
+The scaffolding engine created a `RowVersion` column in the Index view, but that field shouldn't be displayed.
 
-Replace the code in *Views/Departments/Index.cshtml* with the following code.
+Replace the code in `Views/Departments/Index.cshtml` with the following code.
 
-[!code-html[](intro/samples/cu/Views/Departments/Index.cshtml?highlight=4,7,44)]
+[!code-cshtml[](intro/samples/cu/Views/Departments/Index.cshtml?highlight=4,7,44)]
 
-This changes the heading to "Departments", deletes the RowVersion column, and shows full name instead of first name for the administrator.
+This changes the heading to "Departments", deletes the `RowVersion` column, and shows full name instead of first name for the administrator.
 
-## Update the Edit methods in the Departments controller
+## Update Edit methods
 
 In both the HttpGet `Edit` method and the `Details` method, add `AsNoTracking`. In the HttpGet `Edit` method, add eager loading for the Administrator.
 
-[!code-csharp[](intro/samples/cu/Controllers/DepartmentsController.cs?name=snippet_EagerLoading&highlight=2,3)]
+[!code-csharp[](intro/samples/cu/Controllers/DepartmentsController.cs?name=snippet_EagerLoading)]
 
 Replace the existing code for the HttpPost `Edit` method with the following code:
 
 [!code-csharp[](intro/samples/cu/Controllers/DepartmentsController.cs?name=snippet_EditPost)]
 
-The code begins by trying to read the department to be updated. If the `SingleOrDefaultAsync` method returns null, the department was deleted by another user. In that case the code uses the posted form values to create a department entity so that the Edit page can be redisplayed with an error message. As an alternative, you wouldn't have to re-create the department entity if you display only an error message without redisplaying the department fields.
+The code begins by trying to read the department to be updated. If the `FirstOrDefaultAsync` method returns null, the department was deleted by another user. In that case the code uses the posted form values to create a `Department` entity so that the Edit page can be redisplayed with an error message. As an alternative, you wouldn't have to re-create the `Department` entity if you display only an error message without redisplaying the department fields.
 
 The view stores the original `RowVersion` value in a hidden field, and this method receives that value in the `rowVersion` parameter. Before you call `SaveChanges`, you have to put that original `RowVersion` property value in the `OriginalValues` collection for the entity.
 
@@ -167,17 +177,17 @@ Finally, the code sets the `RowVersion` value of the `departmentToUpdate` to the
 
 The `ModelState.Remove` statement is required because `ModelState` has the old `RowVersion` value. In the view, the `ModelState` value for a field takes precedence over the model property values when both are present.
 
-## Update the Department Edit view
+## Update Edit view
 
-In *Views/Departments/Edit.cshtml*, make the following changes:
+In `Views/Departments/Edit.cshtml`, make the following changes:
 
 * Add a hidden field to save the `RowVersion` property value, immediately following the hidden field for the `DepartmentID` property.
 
 * Add a "Select Administrator" option to the drop-down list.
 
-[!code-html[](intro/samples/cu/Views/Departments/Edit.cshtml?highlight=16,34-36)]
+[!code-cshtml[](intro/samples/cu/Views/Departments/Edit.cshtml?highlight=16,34-36)]
 
-## Test concurrency conflicts in the Edit page
+## Test concurrency conflicts
 
 Run the app and go to the Departments Index page. Right-click the **Edit** hyperlink for the English department and select **Open in new tab**, then click the **Edit** hyperlink for the English department. The two browser tabs now display the same information.
 
@@ -203,11 +213,11 @@ For the Delete page, the Entity Framework detects concurrency conflicts caused b
 
 ### Update the Delete methods in the Departments controller
 
-In *DepartmentsController.cs*, replace the HttpGet `Delete` method with the following code:
+In `DepartmentsController.cs`, replace the HttpGet `Delete` method with the following code:
 
 [!code-csharp[](intro/samples/cu/Controllers/DepartmentsController.cs?name=snippet_DeleteGet&highlight=1,10,14-17,21-29)]
 
-The method accepts an optional parameter that indicates whether the page is being redisplayed after a concurrency error. If this flag is true and the department specified no longer exists, it was deleted by another user. In that case, the code redirects to the Index page.  If this flag is true and the Department does exist, it was changed by another user. In that case, the code sends an error message to the view using `ViewData`.
+The method accepts an optional parameter that indicates whether the page is being redisplayed after a concurrency error. If this flag is true and the department specified no longer exists, it was deleted by another user. In that case, the code redirects to the Index page.  If this flag is true and the department does exist, it was changed by another user. In that case, the code sends an error message to the view using `ViewData`.
 
 Replace the code in the HttpPost `Delete` method (named `DeleteConfirmed`) with the following code:
 
@@ -219,7 +229,7 @@ In the scaffolded code that you just replaced, this method accepted only a recor
 public async Task<IActionResult> DeleteConfirmed(int id)
 ```
 
-You've changed this parameter to a Department entity instance created by the model binder. This gives EF access to the RowVersion property value in addition to the record key.
+You've changed this parameter to a `Department` entity instance created by the model binder. This gives EF access to the RowVers`ion property value in addition to the record key.
 
 ```csharp
 public async Task<IActionResult> Delete(Department department)
@@ -233,9 +243,9 @@ If a concurrency error is caught, the code redisplays the Delete confirmation pa
 
 ### Update the Delete view
 
-In *Views/Departments/Delete.cshtml*, replace the scaffolded code with the following code that adds an error message field and hidden fields for the DepartmentID and RowVersion properties. The changes are highlighted.
+In `Views/Departments/Delete.cshtml`, replace the scaffolded code with the following code that adds an error message field and hidden fields for the DepartmentID and RowVersion properties. The changes are highlighted.
 
-[!code-html[](intro/samples/cu/Views/Departments/Delete.cshtml?highlight=9,38,44,45,48)]
+[!code-cshtml[](intro/samples/cu/Views/Departments/Delete.cshtml?highlight=9,38,44,45,48)]
 
 This makes the following changes:
 
@@ -263,20 +273,38 @@ If you click **Delete** again, you're redirected to the Index page, which shows 
 
 You can optionally clean up scaffolded code in the Details and Create views.
 
-Replace the code in *Views/Departments/Details.cshtml* to delete the RowVersion column and show the full name of the Administrator.
+Replace the code in `Views/Departments/Details.cshtml` to delete the RowVersion column and show the full name of the Administrator.
 
-[!code-html[](intro/samples/cu/Views/Departments/Details.cshtml?highlight=35)]
+[!code-cshtml[](intro/samples/cu/Views/Departments/Details.cshtml?highlight=35)]
 
-Replace the code in *Views/Departments/Create.cshtml* to add a Select option to the drop-down list.
+Replace the code in `Views/Departments/Create.cshtml` to add a Select option to the drop-down list.
 
-[!code-html[](intro/samples/cu/Views/Departments/Create.cshtml?highlight=32-34)]
+[!code-cshtml[](intro/samples/cu/Views/Departments/Create.cshtml?highlight=32-34)]
 
-## Summary
+## Get the code
 
-This completes the introduction to handling concurrency conflicts. For more information about how to handle concurrency in EF Core, see [Concurrency conflicts](/ef/core/saving/concurrency). The next tutorial shows how to implement table-per-hierarchy inheritance for the Instructor and Student entities.
+[Download or view the completed application.](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/data/ef-mvc/intro/samples/cu-final)
 
-::: moniker-end
+## Additional resources
 
-> [!div class="step-by-step"]
-> [Previous](update-related-data.md)
-> [Next](inheritance.md)
+ For more information about how to handle concurrency in EF Core, see [Concurrency conflicts](/ef/core/saving/concurrency).
+
+## Next steps
+
+In this tutorial, you:
+
+> [!div class="checklist"]
+> * Learned about concurrency conflicts
+> * Added a tracking property
+> * Created Departments controller and views
+> * Updated Index view
+> * Updated Edit methods
+> * Updated Edit view
+> * Tested concurrency conflicts
+> * Updated the Delete page
+> * Updated Details and Create views
+
+Advance to the next tutorial to learn how to implement table-per-hierarchy inheritance for the Instructor and Student entities.
+
+> [!div class="nextstepaction"]
+> [Next: Implement table-per-hierarchy inheritance](inheritance.md)

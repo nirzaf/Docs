@@ -3,7 +3,7 @@ title: Migrate Authentication and Identity to ASP.NET Core
 author: ardalis
 description: Learn how to migrate authentication and identity from an ASP.NET MVC project to an ASP.NET Core MVC project.
 ms.author: riande
-ms.date: 10/14/2016
+ms.date: 3/22/2020
 uid: migration/identity
 ---
 # Migrate Authentication and Identity to ASP.NET Core
@@ -14,11 +14,15 @@ In the previous article, we [migrated configuration from an ASP.NET MVC project 
 
 ## Configure Identity and Membership
 
-In ASP.NET MVC, authentication and identity features are configured using ASP.NET Identity in *Startup.Auth.cs* and *IdentityConfig.cs*, located in the *App_Start* folder. In ASP.NET Core MVC, these features are configured in *Startup.cs*.
+In ASP.NET MVC, authentication and identity features are configured using ASP.NET Identity in `Startup.Auth.cs` and `IdentityConfig.cs`, located in the *App_Start* folder. In ASP.NET Core MVC, these features are configured in `Startup.cs`.
 
-Install the `Microsoft.AspNetCore.Identity.EntityFrameworkCore` and `Microsoft.AspNetCore.Authentication.Cookies` NuGet packages.
+Install the following NuGet packages:
 
-Then, open *Startup.cs* and update the `Startup.ConfigureServices` method to use Entity Framework and Identity services:
+* `Microsoft.AspNetCore.Identity.EntityFrameworkCore`
+* `Microsoft.AspNetCore.Authentication.Cookies`
+* `Microsoft.EntityFrameworkCore.SqlServer`
+
+In `Startup.cs`, update the `Startup.ConfigureServices` method to use Entity Framework and Identity services:
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
@@ -35,25 +39,25 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-At this point, there are two types referenced in the above code that we haven't yet migrated from the ASP.NET MVC project: `ApplicationDbContext` and `ApplicationUser`. Create a new *Models* folder in the ASP.NET Core project, and add two classes to it corresponding to these types. You will find the ASP.NET MVC versions of these classes in */Models/IdentityModels.cs*, but we will use one file per class in the migrated project since that's more clear.
+At this point, there are two types referenced in the above code that we haven't yet migrated from the ASP.NET MVC project: `ApplicationDbContext` and `ApplicationUser`. Create a new *Models* folder in the ASP.NET Core project, and add two classes to it corresponding to these types. You will find the ASP.NET MVC versions of these classes in `/Models/IdentityModels.cs`, but we will use one file per class in the migrated project since that's more clear.
 
-*ApplicationUser.cs*:
+`ApplicationUser.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace NewMvcProject.Models
 {
-  public class ApplicationUser : IdentityUser
-  {
-  }
+    public class ApplicationUser : IdentityUser
+    {
+    }
 }
 ```
 
-*ApplicationDbContext.cs*:
+`ApplicationDbContext.cs`:
 
 ```csharp
-using Microsoft.AspNetCore.Identity.EntityFramework;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Data.Entity;
 
 namespace NewMvcProject.Models
@@ -78,7 +82,7 @@ namespace NewMvcProject.Models
 
 The ASP.NET Core MVC Starter Web project doesn't include much customization of users, or the `ApplicationDbContext`. When migrating a real app, you also need to migrate all of the custom properties and methods of your app's user and `DbContext` classes, as well as any other Model classes your app utilizes. For example, if your `DbContext` has a `DbSet<Album>`, you need to migrate the `Album` class.
 
-With these files in place, the *Startup.cs* file can be made to compile by updating its `using` statements:
+With these files in place, the `Startup.cs` file can be made to compile by updating its `using` statements:
 
 ```csharp
 using Microsoft.AspNetCore.Builder;
@@ -93,9 +97,9 @@ Our app is now ready to support authentication and Identity services. It just ne
 
 ## Migrate registration and login logic
 
-With Identity services configured for the app and data access configured using Entity Framework and SQL Server, we're ready to add support for registration and login to the app. Recall that [earlier in the migration process](xref:migration/mvc#migrate-the-layout-file) we commented out a reference to *_LoginPartial* in *_Layout.cshtml*. Now it's time to return to that code, uncomment it, and add in the necessary controllers and views to support login functionality.
+With Identity services configured for the app and data access configured using Entity Framework and SQL Server, we're ready to add support for registration and login to the app. Recall that [earlier in the migration process](xref:migration/mvc#migrate-the-layout-file) we commented out a reference to *_LoginPartial* in `_Layout.cshtml`. Now it's time to return to that code, uncomment it, and add in the necessary controllers and views to support login functionality.
 
-Uncomment the `@Html.Partial` line in *_Layout.cshtml*:
+Uncomment the `@Html.Partial` line in `_Layout.cshtml`:
 
 ```cshtml
       <li>@Html.ActionLink("Contact", "Contact", "Home")</li>
@@ -107,7 +111,7 @@ Uncomment the `@Html.Partial` line in *_Layout.cshtml*:
 
 Now, add a new Razor view called *_LoginPartial* to the *Views/Shared* folder:
 
-Update *_LoginPartial.cshtml* with the following code (replace all of its contents):
+Update `_LoginPartial.cshtml` with the following code (replace all of its contents):
 
 ```cshtml
 @inject SignInManager<ApplicationUser> SignInManager

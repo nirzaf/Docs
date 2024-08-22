@@ -1,23 +1,35 @@
 ---
-title: Create a Razor Pages web app with ASP.NET Core
-author: rick-anderson
-description: Create a Razor Pages web app on Windows with Visual Studio, ASP.NET Core, and EF Core.
-monikerRange: '>= aspnetcore-2.0'
-ms.author: riande
-ms.date: 09/08/2017
+title: "Tutorial: Create a Razor Pages web app with ASP.NET Core"
+author: wadepickett
+description: This series of tutorials explains the basics of building a Razor Pages web app. 
+ms.author: wpickett
+ms.date: 06/23/2024
+monikerRange: '>= aspnetcore-3.1'
 uid: tutorials/razor-pages/index
 ---
-# Create a Razor Pages web app with ASP.NET Core
+# Tutorial: Create a Razor Pages web app with ASP.NET Core
 
-This series explains the basics of building a Razor Pages web app with ASP.NET Core using Visual Studio. Other versions of this series include a [macOS version](xref:tutorials/razor-pages-mac/index) and a [Visual Studio Code version](xref:tutorials/razor-pages-vsc/index).
+[!INCLUDE[](~/includes/not-latest-version.md)]
 
-1. [Get started with Razor Pages](xref:tutorials/razor-pages/razor-pages-start)
+This series of tutorials explains the basics of building a Razor Pages web app.
+
+For a more advanced introduction aimed at developers who are familiar with controllers and views, see <xref:razor-pages/index>.
+
+[!INCLUDE [Choose web UI](~/includes/choose-ui-link.md)]
+
+This series includes the following tutorials:
+
+1. [Create a Razor Pages web app](xref:tutorials/razor-pages/razor-pages-start)
 1. [Add a model to a Razor Pages app](xref:tutorials/razor-pages/model)
-1. [Scaffolded Razor Pages](xref:tutorials/razor-pages/page)
-1. [Work with SQL Server LocalDB](xref:tutorials/razor-pages/sql)
-1. [Updating the pages](xref:tutorials/razor-pages/da1)
+1. [Scaffold (generate) Razor pages](xref:tutorials/razor-pages/page)
+1. [Work with a database](xref:tutorials/razor-pages/sql)
+1. [Update Razor pages](xref:tutorials/razor-pages/da1)
 1. [Add search](xref:tutorials/razor-pages/search)
 1. [Add a new field](xref:tutorials/razor-pages/new-field)
 1. [Add validation](xref:tutorials/razor-pages/validation)
 
-After the tutorial to add a file upload capability to the sample app, see <xref:razor-pages/upload-files>.
+At the end, you'll have an app that can display and manage a database of movies.
+
+![Sample page of sample app](~/tutorials/razor-pages/index/_static/sample-page.png)
+
+![Sample edit validation of sample app](~/tutorials/razor-pages/index/_static/sample-page-validation.png)

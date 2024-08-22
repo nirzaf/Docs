@@ -1,7 +1,0 @@
-{
-  "labels": {
-    "product": {
-      "(?i).*": "Source - Docs.ms"
-    }
-  }
-}

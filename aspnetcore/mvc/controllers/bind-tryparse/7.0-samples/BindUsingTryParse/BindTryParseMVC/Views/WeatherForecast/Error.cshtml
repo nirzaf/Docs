@@ -1,0 +1,9 @@
+@model IEnumerable<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>
+@{
+    ViewData["Title"] = "Error";
+}
+
+@foreach (var modelError in Model) 
+{
+    <h2 class="text-danger">@modelError.ErrorMessage</h2>
+}

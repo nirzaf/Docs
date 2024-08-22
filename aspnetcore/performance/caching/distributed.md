@@ -1,15 +1,20 @@
 ---
 title: Distributed caching in ASP.NET Core
-author: guardrex
+author: tdykstra
 description: Learn how to use an ASP.NET Core distributed cache to improve app performance and scalability, especially in a cloud or server farm environment.
-ms.author: riande
+monikerRange: '>= aspnetcore-3.1'
+ms.author: tdykstra
 ms.custom: mvc
-ms.date: 10/19/2018
+ms.date: 01/29/2024
 uid: performance/caching/distributed
 ---
 # Distributed caching in ASP.NET Core
 
-By [Steve Smith](https://ardalis.com/) and [Luke Latham](https://github.com/guardrex)
+By [Mohsin Nasir](https://github.com/mohsinnasir) and [smandia](https://github.com/smandia)
+
+[!INCLUDE[](~/includes/not-latest-version.md)]
+
+:::moniker range=">= aspnetcore-8.0"
 
 A distributed cache is a cache shared by multiple app servers, typically maintained as an external service to the app servers that access it. A distributed cache can improve the performance and scalability of an ASP.NET Core app, especially when the app is hosted by a cloud service or a server farm.
 
@@ -23,85 +28,79 @@ When cached data is distributed, the data:
 
 Distributed cache configuration is implementation specific. This article describes how to configure SQL Server and Redis distributed caches. Third party implementations are also available, such as [NCache](http://www.alachisoft.com/ncache/aspnet-core-idistributedcache-ncache.html) ([NCache on GitHub](https://github.com/Alachisoft/NCache)). Regardless of which implementation is selected, the app interacts with the cache using the <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> interface.
 
-[View or download sample code](https://github.com/aspnet/Docs/tree/master/aspnetcore/performance/caching/distributed/samples/) ([how to download](xref:index#how-to-download-a-sample))
+[View or download sample code](https://github.com/dotnet/AspNetCore.Docs/tree/main/aspnetcore/performance/caching/distributed/samples/) ([how to download](xref:index#how-to-download-a-sample))
 
 ## Prerequisites
 
-::: moniker range=">= aspnetcore-2.1"
+Add a package reference for the distributed cache provider used:
 
-To use a SQL Server distributed cache, reference the [Microsoft.AspNetCore.App metapackage](xref:fundamentals/metapackage-app) or add a package reference to the [Microsoft.Extensions.Caching.SqlServer](https://www.nuget.org/packages/Microsoft.Extensions.Caching.SqlServer) package.
-
-To use a Redis distributed cache, reference the [Microsoft.AspNetCore.App metapackage](xref:fundamentals/metapackage-app) and add a package reference to the [Microsoft.Extensions.Caching.Redis](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Redis) package. The Redis package isn't included in the `Microsoft.AspNetCore.App` package, so you must reference the Redis package separately in your project file.
-
-::: moniker-end
-
-::: moniker range="= aspnetcore-2.0"
-
-To use a SQL Server distributed cache, reference the [Microsoft.AspNetCore.All metapackage](xref:fundamentals/metapackage) or add a package reference to the [Microsoft.Extensions.Caching.SqlServer](https://www.nuget.org/packages/Microsoft.Extensions.Caching.SqlServer) package.
-
-To use a Redis distributed cache, reference the [Microsoft.AspNetCore.All metapackage](xref:fundamentals/metapackage) or add a package reference to the [Microsoft.Extensions.Caching.Redis](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Redis) package. The Redis package is included in `Microsoft.AspNetCore.All` package, so you don't need to reference the Redis package separately in your project file.
-
-::: moniker-end
-
-::: moniker range="< aspnetcore-2.0"
-
-To use a SQL Server distributed cache, add a package reference to the [Microsoft.Extensions.Caching.SqlServer](https://www.nuget.org/packages/Microsoft.Extensions.Caching.SqlServer) package.
-
-To use a Redis distributed cache, add a package reference to the [Microsoft.Extensions.Caching.Redis](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Redis) package.
-
-::: moniker-end
+* For a Redis distributed cache, [Microsoft.Extensions.Caching.StackExchangeRedis](https://www.nuget.org/packages/Microsoft.Extensions.Caching.StackExchangeRedis).
+* For SQL Server, [Microsoft.Extensions.Caching.SqlServer](https://www.nuget.org/packages/Microsoft.Extensions.Caching.SqlServer).
+* For the NCache distributed cache, [NCache.Microsoft.Extensions.Caching.OpenSource](https://www.nuget.org/packages/NCache.Microsoft.Extensions.Caching.OpenSource).
 
 ## IDistributedCache interface
 
 The <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> interface provides the following methods to manipulate items in the distributed cache implementation:
 
-* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Get*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.GetAsync*> &ndash; Accepts a string key and retrieves a cached item as a `byte[]` array if found in the cache.
-* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Set*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.SetAsync*> &ndash; Adds an item (as `byte[]` array) to the cache using a string key.
-* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Refresh*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.RefreshAsync*> &ndash; Refreshes an item in the cache based on its key, resetting its sliding expiration timeout (if any).
-* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Remove*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.RemoveAsync*> &ndash; Removes a cache item based on its string key.
+* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Get*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.GetAsync*>: Accepts a string key and retrieves a cached item as a `byte[]` array if found in the cache.
+* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Set*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.SetAsync*>: Adds an item (as `byte[]` array) to the cache using a string key.
+* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Refresh*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.RefreshAsync*>: Refreshes an item in the cache based on its key, resetting its sliding expiration timeout (if any).
+* <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.Remove*>, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache.RemoveAsync*>: Removes a cache item based on its string key.
 
 ## Establish distributed caching services
 
-Register an implementation of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> in `Startup.ConfigureServices`. Framework-provided implementations described in this topic include:
+Register an implementation of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> in `Program.cs`. Framework-provided implementations described in this topic include:
 
+* [Distributed Redis cache](#distributed-redis-cache)
 * [Distributed Memory Cache](#distributed-memory-cache)
 * [Distributed SQL Server cache](#distributed-sql-server-cache)
-* [Distributed Redis cache](#distributed-redis-cache)
+* [Distributed NCache cache](#distributed-ncache-cache)
+* [Distributed Azure CosmosDB cache](#distributed-azure-cosmosdb-cache)
+
+### Distributed Redis Cache
+
+We recommend production apps use the Distributed Redis Cache because it's the most performant. For more information see [Recommendations](#recommendations).
+
+[Redis](https://redis.io/) is an open source in-memory data store, which is often used as a distributed cache.  You can configure an [Azure Cache for  Redis](/azure/azure-cache-for-redis/cache-overview) for an Azure-hosted ASP.NET Core app, and use an Azure Cache for Redis for local development.
+
+An app configures the cache implementation using a <xref:Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache> instance, by calling <xref:Microsoft.Extensions.DependencyInjection.StackExchangeRedisCacheServiceCollectionExtensions.AddStackExchangeRedisCache%2A>. For [output caching](xref:performance/caching/output#cache-storage), use `AddStackExchangeRedisOutputCache`.
+
+  1. Create an Azure Cache for Redis.
+  1. Copy the Primary connection string (StackExchange.Redis) to [Configuration](xref:fundamentals/configuration/index).
+     * Local development: Save the connection string with [Secret Manager](xref:security/app-secrets#secret-manager).
+     * Azure: Save the connection string in the App Service Configuration or another secure store.
+
+The following code enables the Azure Cache for Redis:
+
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Program.cs?name=snippet_AddStackExchangeRedisCache)]
+
+The preceding code assumes the Primary connection string (StackExchange.Redis) was saved in configuration with the key name `MyRedisConStr`.
+
+For more information, see [Azure Cache for Redis](/azure/azure-cache-for-redis/cache-overview).
+
+See [this GitHub issue](https://github.com/dotnet/AspNetCore.Docs/issues/19542) for a discussion on alternative approaches to a local Redis cache.
 
 ### Distributed Memory Cache
 
-The Distributed Memory Cache (<xref:Microsoft.Extensions.DependencyInjection.MemoryCacheServiceCollectionExtensions.AddDistributedMemoryCache*>) is a framework-provided implementation of `IDistributedCache` that stores items in memory. The Distributed Memory Cache isn't an actual distributed cache. Cached items are stored by the app instance on the server where the app is running.
+The Distributed Memory Cache (<xref:Microsoft.Extensions.DependencyInjection.MemoryCacheServiceCollectionExtensions.AddDistributedMemoryCache*>) is a framework-provided implementation of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> that stores items in memory. The Distributed Memory Cache isn't an actual distributed cache. Cached items are stored by the app instance on the server where the app is running.
 
 The Distributed Memory Cache is a useful implementation:
 
 * In development and testing scenarios.
 * When a single server is used in production and memory consumption isn't an issue. Implementing the Distributed Memory Cache abstracts cached data storage. It allows for implementing a true distributed caching solution in the future if multiple nodes or fault tolerance become necessary.
 
-The sample app makes use of the Distributed Memory Cache when the app is run in the Development environment:
+The sample app makes use of the Distributed Memory Cache when the app is run in the Development environment in `Program.cs`:
 
-[!code-csharp[](distributed/samples/2.x/DistCacheSample/Startup.cs?name=snippet_ConfigureServices&highlight=5)]
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Program.cs?name=snippet_AddDistributedMemoryCache)]
 
 ### Distributed SQL Server Cache
 
 The Distributed SQL Server Cache implementation (<xref:Microsoft.Extensions.DependencyInjection.SqlServerCachingServicesExtensions.AddDistributedSqlServerCache*>) allows the distributed cache to use a SQL Server database as its backing store. To create a SQL Server cached item table in a SQL Server instance, you can use the `sql-cache` tool. The tool creates a table with the name and schema that you specify.
 
-::: moniker range="< aspnetcore-2.1"
-
-Add `SqlConfig.Tools` to the `<ItemGroup>` element of the project file and run `dotnet restore`.
-
-```xml
-<ItemGroup>
-  <DotNetCliToolReference Include="Microsoft.Extensions.Caching.SqlConfig.Tools"
-                          Version="2.0.2" />
-</ItemGroup>
-```
-
-::: moniker-end
-
 Create a table in SQL Server by running the `sql-cache create` command. Provide the SQL Server instance (`Data Source`), database (`Initial Catalog`), schema (for example, `dbo`), and table name (for example, `TestCache`):
 
-```console
-dotnet sql-cache create "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=DistCache;Integrated Security=True;" dbo TestCache
+```dotnetcli
+dotnet sql-cache create "Data Source=(localdb)/MSSQLLocalDB;Initial Catalog=DistCache;Integrated Security=True;" dbo TestCache
 ```
 
 A message is logged to indicate that the tool was successful:
@@ -112,59 +111,89 @@ Table and index were created successfully.
 
 The table created by the `sql-cache` tool has the following schema:
 
-![SqlServer Cache Table](distributed/_static/SqlServerCacheTable.png)
+![SqlServer Cache Table](~/performance/caching/distributed/_static/SqlServerCacheTable.png)
 
 > [!NOTE]
 > An app should manipulate cache values using an instance of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache>, not a <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCache>.
 
-The sample app implements <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCache> in a non-Development environment:
+The sample app implements <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCache> in a non-Development environment in `Program.cs`:
 
-[!code-csharp[](distributed/samples/2.x/DistCacheSample/Startup.cs?name=snippet_ConfigureServices&highlight=9-15)]
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Program.cs?name=snippet_AddDistributedSqlServerCache)]
 
 > [!NOTE]
-> A <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.ConnectionString*> (and optionally, <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.SchemaName*> and <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.TableName*>) are typically stored outside of source control (for example, stored by the [Secret Manager](xref:security/app-secrets) or in *appsettings.json*/*appsettings.{Environment}.json* files). The connection string may contain credentials that should be kept out of source control systems.
+> A <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.ConnectionString*> (and optionally, <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.SchemaName*> and <xref:Microsoft.Extensions.Caching.SqlServer.SqlServerCacheOptions.TableName*>) are typically stored outside of source control (for example, stored by the [Secret Manager](xref:security/app-secrets) or in `appsettings.json`/`appsettings.{Environment}.json` files). The connection string may contain credentials that should be kept out of source control systems.
 
-### Distributed Redis Cache
+### Distributed NCache Cache
 
-[Redis](https://redis.io/) is an open source in-memory data store, which is often used as a distributed cache. You can use Redis locally, and you can configure an [Azure Redis Cache](https://azure.microsoft.com/services/cache/) for an Azure-hosted ASP.NET Core app. An app configures the cache implementation using a <xref:Microsoft.Extensions.Caching.Redis.RedisCache> instance (<xref:Microsoft.Extensions.DependencyInjection.RedisCacheServiceCollectionExtensions.AddDistributedRedisCache*>):
+[NCache](https://github.com/Alachisoft/NCache) is an open source in-memory distributed cache developed natively in .NET and .NET Core. NCache works both locally and configured as a distributed cache cluster for an ASP.NET Core app running in Azure or on other hosting platforms.
+
+To install and configure NCache on your local machine, see [Getting Started Guide for Windows (.NET and .NET Core)](https://www.alachisoft.com/resources/docs/ncache/getting-started-guide-windows/).
+
+To configure NCache:
+
+1. Install [NCache open source NuGet](https://www.nuget.org/packages/Alachisoft.NCache.OpenSource.SDK/).
+1. Configure the cache cluster in [client.ncconf](https://www.alachisoft.com/resources/docs/ncache/admin-guide/client-config.html).
+1. Add the following code to `Program.cs`:
+
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Program.cs?name=snippet_AddNCache_Cache)]
+
+### Distributed Azure CosmosDB Cache
+
+[Azure Cosmos DB](/azure/cosmos-db/introduction) can be used in ASP.NET Core as a session state provider by using the `IDistributedCache` interface. Azure Cosmos DB is a fully managed NoSQL and relational database for modern app development that offers high availability, scalability, and low-latency access to data for mission-critical applications.
+
+After installing the [Microsoft.Extensions.Caching.Cosmos](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Cosmos) NuGet package, configure an Azure Cosmos DB distributed cache as follows:
+
+#### Reuse an existing client
+
+The easiest way to configure distributed cache is by reusing an existing Azure Cosmos DB client. In this case, the `CosmosClient` instance won't be disposed when the provider is disposed.
 
 ```csharp
-services.AddDistributedRedisCache(options =>
+services.AddCosmosCache((CosmosCacheOptions cacheOptions) =>
 {
-    options.Configuration = "localhost";
-    options.InstanceName = "SampleInstance";
+    cacheOptions.ContainerName = Configuration["CosmosCacheContainer"];
+    cacheOptions.DatabaseName = Configuration["CosmosCacheDatabase"];
+    cacheOptions.CosmosClient = existingCosmosClient;
+    cacheOptions.CreateIfNotExists = true;
 });
 ```
 
-To install Redis on your local machine:
+#### Create a new client
 
-* Install the [Chocolatey Redis package](https://chocolatey.org/packages/redis-64/).
-* Run `redis-server` from a command prompt.
+Alternatively, instantiate a new client. In this case, the `CosmosClient` instance will get disposed when the provider is disposed.
+
+```csharp
+services.AddCosmosCache((CosmosCacheOptions cacheOptions) =>
+{
+    cacheOptions.ContainerName = Configuration["CosmosCacheContainer"];
+    cacheOptions.DatabaseName = Configuration["CosmosCacheDatabase"];
+    cacheOptions.ClientBuilder = new CosmosClientBuilder(Configuration["CosmosConnectionString"]);
+    cacheOptions.CreateIfNotExists = true;
+});
+```
 
 ## Use the distributed cache
 
-To use the <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> interface, request an instance of `IDistributedCache` from any constructor in the app. The instance is provided by [dependency injection (DI)](xref:fundamentals/dependency-injection).
+To use the <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> interface, request an instance of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> in the app. The instance is provided by [dependency injection (DI)](xref:fundamentals/dependency-injection).
 
-When the app starts, `IDistributedCache` is injected into `Startup.Configure`. The current time is cached using <xref:Microsoft.AspNetCore.Hosting.IApplicationLifetime> (for more information, see [Web Host: IApplicationLifetime interface](xref:fundamentals/host/web-host#iapplicationlifetime-interface)):
+When the sample app starts, <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> is injected into `Program.cs`. The current time is cached using <xref:Microsoft.Extensions.Hosting.IHostApplicationLifetime> (for more information, see [Generic Host: IHostApplicationLifetime](xref:fundamentals/host/generic-host#ihostapplicationlifetime)):
 
-[!code-csharp[](distributed/samples/2.x/DistCacheSample/Startup.cs?name=snippet_Configure&highlight=10)]
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Program.cs?name=snippet_Configure)]
 
-The sample app injects `IDistributedCache` into the `IndexModel` for use by the Index page.
+The sample app injects <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> into the `IndexModel` for use by the Index page.
 
 Each time the Index page is loaded, the cache is checked for the cached time in `OnGetAsync`. If the cached time hasn't expired, the time is displayed. If 20 seconds have elapsed since the last time the cached time was accessed (the last time this page was loaded), the page displays *Cached Time Expired*.
 
 Immediately update the cached time to the current time by selecting the **Reset Cached Time** button. The button triggers the `OnPostResetCachedTime` handler method.
 
-[!code-csharp[](distributed/samples/2.x/DistCacheSample/Pages/Index.cshtml.cs?name=snippet_IndexModel&highlight=7,14-20,25-29)]
+[!code-csharp[](~/performance/caching/distributed/samples/6.x/DistCacheSample/Pages/Index.cshtml.cs?name=snippet_IndexModel&highlight=7,14-20,25-29)]
 
-> [!NOTE]
-> There's no need to use a Singleton or Scoped lifetime for `IDistributedCache` instances (at least for the built-in implementations).
+> There's  ***no*** need to use a Singleton or Scoped lifetime for <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> instances with the built-in implementations.
 >
-> You can also create an `IDistributedCache` instance wherever you might need one instead of using DI, but creating an instance in code can make your code harder to test and violates the [Explicit Dependencies Principle](/dotnet/standard/modern-web-apps-azure-architecture/architectural-principles#explicit-dependencies).
+> You can also create an <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> instance wherever you might need one instead of using DI, but creating an instance in code can make your code harder to test and violates the [Explicit Dependencies Principle](/dotnet/standard/modern-web-apps-azure-architecture/architectural-principles#explicit-dependencies).
 
 ## Recommendations
 
-When deciding which implementation of `IDistributedCache` is best for your app, consider the following:
+When deciding which implementation of <xref:Microsoft.Extensions.Caching.Distributed.IDistributedCache> is best for your app, consider the following:
 
 * Existing infrastructure
 * Performance requirements
@@ -173,15 +202,16 @@ When deciding which implementation of `IDistributedCache` is best for your app, 
 
 Caching solutions usually rely on in-memory storage to provide fast retrieval of cached data, but memory is a limited resource and costly to expand. Only store commonly used data in a cache.
 
-Generally, a Redis cache provides higher throughput and lower latency than a SQL Server cache. However, benchmarking is usually required to determine the performance characteristics of caching strategies.
+For most apps, a Redis cache provides higher throughput and lower latency than a SQL Server cache. However, benchmarking is recommended to determine the performance characteristics of caching strategies.
 
 When SQL Server is used as a distributed cache backing store, use of the same database for the cache and the app's ordinary data storage and retrieval can negatively impact the performance of both. We recommend using a dedicated SQL Server instance for the distributed cache backing store.
 
 ## Additional resources
 
-* [Redis Cache on Azure](https://azure.microsoft.com/documentation/services/redis-cache/)
-* [SQL Database on Azure](https://azure.microsoft.com/documentation/services/sql-database/)
+* [Redis Cache on Azure](/azure/azure-cache-for-redis/)
+* [SQL Database on Azure](/azure/sql-database/)
 * [ASP.NET Core IDistributedCache Provider for NCache in Web Farms](http://www.alachisoft.com/ncache/aspnet-core-idistributedcache-ncache.html) ([NCache on GitHub](https://github.com/Alachisoft/NCache))
+* [Repository README file for Microsoft.Extensions.Caching.Cosmos](https://github.com/Azure/Microsoft.Extensions.Caching.Cosmos/blob/master/README.md)
 * <xref:performance/caching/memory>
 * <xref:fundamentals/change-tokens>
 * <xref:performance/caching/response>
@@ -189,3 +219,8 @@ When SQL Server is used as a distributed cache backing store, use of the same da
 * <xref:mvc/views/tag-helpers/builtin-th/cache-tag-helper>
 * <xref:mvc/views/tag-helpers/builtin-th/distributed-cache-tag-helper>
 * <xref:host-and-deploy/web-farm>
+
+:::moniker-end
+
+[!INCLUDE[](~/performance/caching/distributed/includes/distributed6-7.md)]
+[!INCLUDE[](~/performance/caching/distributed/includes/distributed5.md)]

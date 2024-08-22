@@ -36,7 +36,7 @@ Several quick start options are available:
 * Install with [Meteor](https://www.meteor.com): `meteor add twbs:bootstrap`.
 * Install with [Composer](https://getcomposer.org): `composer require twbs/bootstrap`.
 
-Read the [Getting started page](http://getbootstrap.com/getting-started/) for information on the framework contents, templates and examples, and more.
+Read the [Getting started page](https://getbootstrap.com/getting-started/) for information on the framework contents, templates and examples, and more.
 
 ### What's included
 
@@ -89,7 +89,7 @@ Learn more about using Jekyll by reading its [documentation](http://jekyllrb.com
 
 ### Documentation for previous releases
 
-Documentation for v2.3.2 has been made available for the time being at <http://getbootstrap.com/2.3.2/> while folks transition to Bootstrap 3.
+Documentation for v2.3.2 has been made available for the time being at <https://getbootstrap.com/2.3.2/> while folks transition to Bootstrap 3.
 
 [Previous releases](https://github.com/twbs/bootstrap/releases) and their documentation are also available for download.
 
@@ -109,17 +109,17 @@ Editor preferences are available in the [editor config](https://github.com/twbs/
 
 Get updates on Bootstrap's development and chat with the project maintainers and community members.
 
-* Follow [@getbootstrap on Twitter](https://twitter.com/getbootstrap).
+* Follow [`@getbootstrap` on Twitter](https://twitter.com/getbootstrap).
 * Read and subscribe to [The Official Bootstrap Blog](http://blog.getbootstrap.com).
 * Join [the official Slack room](https://bootstrap-slack.herokuapp.com).
 * Chat with fellow Bootstrappers in IRC. On the `irc.freenode.net` server, in the `##bootstrap` channel.
-* Implementation help may be found at Stack Overflow (tagged [`twitter-bootstrap-3`](https://stackoverflow.com/questions/tagged/twitter-bootstrap-3)).
+* Implementation help may be found at Stack Overflow (tagged [twitter-bootstrap-3](https://stackoverflow.com/questions/tagged/twitter-bootstrap-3)).
 * Developers should use the keyword `bootstrap` on packages which modify or add to the functionality of Bootstrap when distributing through [npm](https://www.npmjs.com/browse/keyword/bootstrap) or similar delivery mechanisms for maximum discoverability.
 
 
 ## Versioning
 
-For transparency into our release cycle and in striving to maintain backward compatibility, Bootstrap is maintained under [the Semantic Versioning guidelines](http://semver.org/). Sometimes we screw up, but we'll adhere to those rules whenever possible.
+For transparency into our release cycle and in striving to maintain backward compatibility, Bootstrap is maintained under [the Semantic Versioning guidelines](https://semver.org/). Sometimes we screw up, but we'll adhere to those rules whenever possible.
 
 See [the Releases section of our GitHub project](https://github.com/twbs/bootstrap/releases) for changelogs for each release version of Bootstrap. Release announcement posts on [the official Bootstrap blog](http://blog.getbootstrap.com) contain summaries of the most noteworthy changes made in each release.
 

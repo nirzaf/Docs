@@ -1,58 +1,42 @@
 ---
-title: Examine the Details and Delete methods of an ASP.NET Core app
-author: rick-anderson
-description: Learn about the Details controller method and view in a basic ASP.NET Core MVC app.
-ms.author: riande
-ms.date: 03/07/2017
+title: Part 10, examine the Details and Delete methods of an ASP.NET Core app
+author: wadepickett
+description: Part 10 of tutorial series on ASP.NET Core MVC.
+monikerRange: '>= aspnetcore-3.1'
+ms.author: wpickett
+ms.date: 08/04/2024
 uid: tutorials/first-mvc-app/details
 ---
 
-# Examine the Details and Delete methods of an ASP.NET Core app
+# Part 10, examine the Details and Delete methods of an ASP.NET Core app
+
+[!INCLUDE[](~/includes/not-latest-version.md)]
 
 By [Rick Anderson](https://twitter.com/RickAndMSFT)
 
+:::moniker range=">= aspnetcore-9.0"
+
 Open the Movie controller and examine the `Details` method:
 
-::: moniker range=">= aspnetcore-2.1"
+[!code-csharp[](~/tutorials/first-mvc-app/start-mvc/sample/MvcMovie90/Controllers/MoviesController.cs?name=snippet_Details)]
 
-[!code-csharp[](start-mvc/sample/MvcMovie21/Controllers/MoviesController.cs?name=snippet_details)]
+The MVC scaffolding engine that created this action method adds a comment showing an HTTP request that invokes the method. In this case it's a GET request with three URL segments, the `Movies` controller, the `Details` method, and an `id` value. Recall these segments are defined in `Program.cs`.
 
-::: moniker-end
+[!code-csharp[](~/tutorials/first-mvc-app/start-mvc/sample/MvcMovie90/Program.cs?highlight=3&name=snippet_MapControllerRoute)]
 
-::: moniker range="<= aspnetcore-2.0"
-
-[!code-csharp[](start-mvc/sample/MvcMovie/Controllers/MoviesController.cs?name=snippet_details)]
-
-::: moniker-end
-
-The MVC scaffolding engine that created this action method adds a comment showing an HTTP request that invokes the method. In this case it's a GET request with three URL segments, the `Movies` controller, the `Details` method and an `id` value. Recall these segments are defined in *Startup.cs*.
-
-[!code-csharp[](start-mvc/sample/MvcMovie/Startup.cs?highlight=5&name=snippet_1)]
-
-EF makes it easy to search for data using the `SingleOrDefaultAsync` method. An important security feature built into the method is that the code verifies that the search method has found a movie before it tries to do anything with it. For example, a hacker could introduce errors into the site by changing the URL created by the links from `http://localhost:xxxx/Movies/Details/1` to something like  `http://localhost:xxxx/Movies/Details/12345` (or some other value that doesn't represent an actual movie). If you didn't check for a null movie, the app would throw an exception.
+EF makes it easy to search for data using the `FirstOrDefaultAsync` method. An important security feature built into the method is that the code verifies that the search method has found a movie before it tries to do anything with it. For example, a hacker could introduce errors into the site by changing the URL created by the links from `http://localhost:{PORT}/Movies/Details/1` to something like  `http://localhost:{PORT}/Movies/Details/12345` (or some other value that doesn't represent an actual movie). If you didn't check for a null movie, the app would throw an exception.
 
 Examine the `Delete` and `DeleteConfirmed` methods.
 
-::: moniker range=">= aspnetcore-2.1"
-
-[!code-csharp[](start-mvc/sample/MvcMovie21/Controllers/MoviesController.cs?name=snippet_delete)]
-
-::: moniker-end
-
-::: moniker range="<= aspnetcore-2.0"
-
-[!code-csharp[](start-mvc/sample/MvcMovie/Controllers/MoviesController.cs?name=snippet_delete)]
-
-::: moniker-end
+[!code-csharp[](~/tutorials/first-mvc-app/start-mvc/sample/mvcmovie90/Controllers/MoviesController.cs?name=snippet_Delete)]
 
 Note that the `HTTP GET Delete` method doesn't delete the specified movie, it returns a view of the movie where you can submit (HttpPost) the deletion. Performing a delete operation in response to a GET request (or for that matter, performing an edit operation, create operation, or any other operation that changes data) opens up a security hole.
 
 The `[HttpPost]` method that deletes the data is named `DeleteConfirmed` to give the HTTP POST method a unique signature or name. The two method signatures are shown below:
 
-[!code-csharp[](start-mvc/sample/MvcMovie/Controllers/MoviesController.cs?name=snippet_delete2)]
+[!code-csharp[](~/tutorials/first-mvc-app/start-mvc/sample/mvcmovie90/Controllers/MoviesController.cs?name=snippet_DeleteSignature)]
 
-[!code-csharp[](start-mvc/sample/MvcMovie/Controllers/MoviesController.cs?name=snippet_delete3)]
-
+[!code-csharp[](~/tutorials/first-mvc-app/start-mvc/sample/mvcmovie90/Controllers/MoviesController.cs?name=snippet_DeleteConfirmedSignature)]
 
 The common language runtime (CLR) requires overloaded methods to have a unique parameter signature (same method name but different list of parameters). However, here you need two `Delete` methods -- one for GET and one for POST -- that both have the same parameter signature. (They both need to accept a single integer as a parameter.)
 
@@ -62,13 +46,26 @@ Another common work around for methods that have identical names and signatures 
 
 ```csharp
 // POST: Movies/Delete/6
+[HttpPost]
 [ValidateAntiForgeryToken]
 public async Task<IActionResult> Delete(int id, bool notUsed)
 ```
 
 ### Publish to Azure
 
-For information on deploying to Azure, see [Tutorial: Build a .NET Core and SQL Database web app in Azure App Service](/azure/app-service/app-service-web-tutorial-dotnetcore-sqldb).
+For information on deploying to Azure, see [Tutorial: Build an ASP.NET Core and SQL Database app in Azure App Service](/azure/app-service/tutorial-dotnetcore-sqldb-app).
+
+[!INCLUDE[](~/includes/reliableWAP_H2.md)]
 
 > [!div class="step-by-step"]
-> [Previous](validation.md)
+> [Previous](~/tutorials/first-mvc-app/validation.md)
+
+:::moniker-end
+
+[!INCLUDE[](~/tutorials/first-mvc-app/details/includes/details8.md)]
+
+[!INCLUDE[](~/tutorials/first-mvc-app/details/includes/details7.md)]
+
+[!INCLUDE[](~/tutorials/first-mvc-app/details/includes/details6.md)]
+
+[!INCLUDE[](~/tutorials/first-mvc-app/details/includes/details3-5.md)]

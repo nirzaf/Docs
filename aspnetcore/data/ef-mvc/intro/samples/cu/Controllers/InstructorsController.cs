@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContosoUniversity.Data;
 using ContosoUniversity.Models;
-#region snippet_Using
+// <snippet_Using>
 using ContosoUniversity.Models.SchoolViewModels;
-#endregion
+// </snippet_Using>
 
 namespace ContosoUniversity.Controllers
 {
@@ -27,18 +27,18 @@ namespace ContosoUniversity.Controllers
 
         // GET: Instructors
 #if ScaffoldedCode
-        #region snippet_ScaffoldedCode
+// <snippet_ScaffoldedCode>
         public async Task<IActionResult> Index()
         {
             return View(await _context.Instructors.AsNoTracking().ToListAsync());
         }
-        #endregion
+// </snippet_ScaffoldedCode>
 #elif EagerLoading
-        #region snippet_EagerLoading
+// <snippet_EagerLoading>
         public async Task<IActionResult> Index(int? id, int? courseID)
         {
             var viewModel = new InstructorIndexData();
-            #region snippet_ThenInclude
+// <snippet_ThenInclude>
             viewModel.Instructors = await _context.Instructors
                   .Include(i => i.OfficeAssignment)
                   .Include(i => i.CourseAssignments)
@@ -51,7 +51,7 @@ namespace ContosoUniversity.Controllers
                   .AsNoTracking()
                   .OrderBy(i => i.LastName)
                   .ToListAsync();
-            #endregion
+// </snippet_ThenInclude>
             
             if (id != null)
             {
@@ -70,9 +70,9 @@ namespace ContosoUniversity.Controllers
 
             return View(viewModel);
         }
-        #endregion
+// </snippet_EagerLoading>
 #elif ExplicitLoading
-        #region snippet_ExplicitLoading
+// <snippet_ExplicitLoading>
         public async Task<IActionResult> Index(int? id, int? courseID)
         {
             var viewModel = new InstructorIndexData();
@@ -106,7 +106,7 @@ namespace ContosoUniversity.Controllers
 
             return View(viewModel);
         }
-        #endregion
+// </snippet_ExplicitLoading>
 #endif
         // GET: Instructors/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -118,7 +118,7 @@ namespace ContosoUniversity.Controllers
 
             var instructor = await _context.Instructors
                 .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.ID == id);
             if (instructor == null)
             {
                 return NotFound();
@@ -128,7 +128,7 @@ namespace ContosoUniversity.Controllers
         }
 
         // GET: Instructors/Create
-        #region snippet_Create
+// <snippet_Create>
         public IActionResult Create()
         {
             var instructor = new Instructor();
@@ -160,11 +160,11 @@ namespace ContosoUniversity.Controllers
             PopulateAssignedCourseData(instructor);
             return View(instructor);
         }
-        #endregion
+// </snippet_Create>
 
         // GET: Instructors/Edit/5
 #if EditOfficeAssignment
-        #region snippet_EditGetOA
+// <snippet_EditGetOA>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -175,16 +175,16 @@ namespace ContosoUniversity.Controllers
             var instructor = await _context.Instructors
                 .Include(i => i.OfficeAssignment)
                 .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.ID == id);
             if (instructor == null)
             {
                 return NotFound();
             }
             return View(instructor);
         }
-        #endregion
+// </snippet_EditGetOA>
 #elif EditCourses
-        #region snippet_EditGetCourses
+// <snippet_EditGetCourses>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -196,7 +196,7 @@ namespace ContosoUniversity.Controllers
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.CourseAssignments).ThenInclude(i => i.Course)
                 .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.ID == id);
             if (instructor == null)
             {
                 return NotFound();
@@ -221,13 +221,13 @@ namespace ContosoUniversity.Controllers
             }
             ViewData["Courses"] = viewModel;
         }
-        #endregion
+// </snippet_EditGetCourses>
 #endif
         // POST: Instructors/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
 #if EditOfficeAssignment
-        #region snippet_EditPostOA
+// <snippet_EditPostOA>
         [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPost(int? id)
@@ -239,7 +239,7 @@ namespace ContosoUniversity.Controllers
 
             var instructorToUpdate = await _context.Instructors
                 .Include(i => i.OfficeAssignment)
-                .SingleOrDefaultAsync(s => s.ID == id);
+                .FirstOrDefaultAsync(s => s.ID == id);
 
             if (await TryUpdateModelAsync<Instructor>(
                 instructorToUpdate,
@@ -265,10 +265,10 @@ namespace ContosoUniversity.Controllers
             }
             return View(instructorToUpdate);
         }
-        #endregion
+// </snippet_EditPostOA>
 
 #elif EditCourses
-        #region snippet_EditPostCourses
+// <snippet_EditPostCourses>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int? id, string[] selectedCourses)
@@ -282,7 +282,7 @@ namespace ContosoUniversity.Controllers
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.CourseAssignments)
                     .ThenInclude(i => i.Course)
-                .SingleOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.ID == id);
 
             if (await TryUpdateModelAsync<Instructor>(
                 instructorToUpdate,
@@ -311,9 +311,9 @@ namespace ContosoUniversity.Controllers
             PopulateAssignedCourseData(instructorToUpdate);
             return View(instructorToUpdate);
         }
-        #endregion
+// </snippet_EditPostCourses>
 
-        #region snippet_UpdateCourses
+// <snippet_UpdateCourses>
         private void UpdateInstructorCourses(string[] selectedCourses, Instructor instructorToUpdate)
         {
             if (selectedCourses == null)
@@ -339,13 +339,13 @@ namespace ContosoUniversity.Controllers
 
                     if (instructorCourses.Contains(course.CourseID))
                     {
-                        CourseAssignment courseToRemove = instructorToUpdate.CourseAssignments.SingleOrDefault(i => i.CourseID == course.CourseID);
+                        CourseAssignment courseToRemove = instructorToUpdate.CourseAssignments.FirstOrDefault(i => i.CourseID == course.CourseID);
                         _context.Remove(courseToRemove);
                     }
                 }
             }
         }
-        #endregion
+// </snippet_UpdateCourses>
 #endif
         // GET: Instructors/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -357,7 +357,7 @@ namespace ContosoUniversity.Controllers
 
             var instructor = await _context.Instructors
                 .AsNoTracking()
-                .SingleOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.ID == id);
             if (instructor == null)
             {
                 return NotFound();
@@ -366,7 +366,7 @@ namespace ContosoUniversity.Controllers
             return View(instructor);
         }
 
-        #region snippet_DeleteConfirmed
+// <snippet_DeleteConfirmed>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -385,6 +385,6 @@ namespace ContosoUniversity.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        #endregion
+// </snippet_DeleteConfirmed>
     }
 }

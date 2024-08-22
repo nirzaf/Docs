@@ -1,14 +1,12 @@
 ---
 title: Migrate HTTP handlers and modules to ASP.NET Core middleware
+description: Migrate HTTP handlers and modules to ASP.NET Core middleware
 author: rick-anderson
-description: 
-ms.author: tdykstra
-ms.date: 12/07/2016
+ms.author: riande
+ms.date: 3/22/2024
 uid: migration/http-modules
 ---
 # Migrate HTTP handlers and modules to ASP.NET Core middleware
-
-By [Matt Perdeck](https://www.linkedin.com/in/mattperdeck)
 
 This article shows how to migrate existing ASP.NET [HTTP modules and handlers from system.webserver](/iis/configuration/system.webserver/) to ASP.NET Core [middleware](xref:fundamentals/middleware/index).
 
@@ -20,61 +18,70 @@ Before proceeding to ASP.NET Core middleware, let's first recap how HTTP modules
 
 **Handlers are:**
 
-   * Classes that implement [IHttpHandler](/dotnet/api/system.web.ihttphandler)
+* Classes that implement <xref:System.Web.IHttpHandler>
 
-   * Used to handle requests with a given file name or extension, such as *.report*
+* Used to handle requests with a given file name or extension, such as *.report*
 
-   * [Configured](/iis/configuration/system.webserver/handlers/) in *Web.config*
+* [Configured](/iis/configuration/system.webserver/handlers/) in *Web.config*
 
 **Modules are:**
 
-   * Classes that implement [IHttpModule](/dotnet/api/system.web.ihttpmodule)
+* Classes that implement <xref:System.Web.IHttpModule>
 
-   * Invoked for every request
+* Invoked for every request
 
-   * Able to short-circuit (stop further processing of a request)
+* Able to short-circuit (stop further processing of a request)
 
-   * Able to add to the HTTP response, or create their own
+* Able to add to the HTTP response, or create their own
 
-   * [Configured](/iis/configuration/system.webserver/modules/) in *Web.config*
+* [Configured](/iis/configuration/system.webserver/modules/) in *Web.config*
 
 **The order in which modules process incoming requests is determined by:**
 
-   1. The [application life cycle](https://msdn.microsoft.com/library/ms227673.aspx), which is a series events fired by ASP.NET: [BeginRequest](/dotnet/api/system.web.httpapplication.beginrequest), [AuthenticateRequest](/dotnet/api/system.web.httpapplication.authenticaterequest), etc. Each module can create a handler for one or more events.
+1. A series events fired by ASP.NET, such as <xref:System.Web.HttpApplication.BeginRequest> and <xref:System.Web.HttpApplication.AuthenticateRequest>. For a complete list, see <xref:System.Web.HttpApplication?displayProperty=fullName>. Each module can create a handler for one or more events.
 
-   2. For the same event, the order in which they're configured in *Web.config*.
+2. For the same event, the order in which they're configured in *Web.config*.
 
-In addition to modules, you can add handlers for the life cycle events to your *Global.asax.cs* file. These handlers run after the handlers in the configured modules.
+In addition to modules, you can add handlers for the life cycle events to your `Global.asax.cs` file. These handlers run after the handlers in the configured modules.
 
 ## From handlers and modules to middleware
 
 **Middleware are simpler than HTTP modules and handlers:**
 
-   * Modules, handlers, *Global.asax.cs*, *Web.config* (except for IIS configuration) and the application life cycle are gone
+* Modules, handlers, `Global.asax.cs`, *Web.config* (except for IIS configuration) and the application life cycle are gone
 
-   * The roles of both modules and handlers have been taken over by middleware
+* The roles of both modules and handlers have been taken over by middleware
 
-   * Middleware are configured using code rather than in *Web.config*
+* Middleware are configured using code rather than in *Web.config*
 
-   * [Pipeline branching](xref:fundamentals/middleware/index#use-run-and-map) lets you send requests to specific middleware, based on not only the URL but also on request headers, query strings, etc.
+:::moniker range=">= aspnetcore-3.0"
+
+* [Pipeline branching](xref:fundamentals/middleware/index#branch-the-middleware-pipeline) lets you send requests to specific middleware, based on not only the URL but also on request headers, query strings, etc.
+
+:::moniker-end
+:::moniker range="< aspnetcore-3.0"
+
+* [Pipeline branching](xref:fundamentals/middleware/index#branch-the-middleware-pipeline) lets you send requests to specific middleware, based on not only the URL but also on request headers, query strings, etc.
+
+:::moniker-end
 
 **Middleware are very similar to modules:**
 
-   * Invoked in principle for every request
+* Invoked in principle for every request
 
-   * Able to short-circuit a request, by [not passing the request to the next middleware](#http-modules-shortcircuiting-middleware)
+* Able to short-circuit a request, by [not passing the request to the next middleware](#http-modules-shortcircuiting-middleware)
 
-   * Able to create their own HTTP response
+* Able to create their own HTTP response
 
 **Middleware and modules are processed in a different order:**
 
-   * Order of middleware is based on the order in which they're inserted into the request pipeline, while order of modules is mainly based on [application life cycle](https://msdn.microsoft.com/library/ms227673.aspx) events
+* Order of middleware is based on the order in which they're inserted into the request pipeline, while order of modules is mainly based on <xref:System.Web.HttpApplication?displayProperty=fullName> events.
 
-   * Order of middleware for responses is the reverse from that for requests, while order of modules is the same for requests and responses
+* Order of middleware for responses is the reverse from that for requests, while order of modules is the same for requests and responses
 
-   * See [Create a middleware pipeline with IApplicationBuilder](xref:fundamentals/middleware/index#create-a-middleware-pipeline-with-iapplicationbuilder)
+* See [Create a middleware pipeline with IApplicationBuilder](xref:fundamentals/middleware/index#create-a-middleware-pipeline-with-iapplicationbuilder)
 
-![Middleware](http-modules/_static/middleware.png)
+![Authorization Middleware short-circuits a request for a user who isn't authorized. A request for the Index page is permitted and processed by MVC Middleware. A request for a sales report is permitted and processed by a custom report Middleware.](http-modules/_static/middleware.png)
 
 Note how in the image above, the authentication middleware short-circuited the request.
 
@@ -90,7 +97,7 @@ As shown in the [Middleware](xref:fundamentals/middleware/index) page, an ASP.NE
 
 [!code-csharp[](../migration/http-modules/sample/Asp.Net.Core/Middleware/MyMiddleware.cs?highlight=9,13,20,24,28,30,32)]
 
-The preceding middleware template was taken from the section on [writing middleware](xref:fundamentals/middleware/index#write-middleware).
+The preceding middleware template was taken from the section on [writing middleware](xref:fundamentals/middleware/write).
 
 The *MyMiddlewareExtensions* helper class makes it easier to configure your middleware in your `Startup` class. The `UseMyMiddleware` method adds your middleware class to the request pipeline. Services required by the middleware get injected in the middleware's constructor.
 
@@ -170,7 +177,7 @@ The new [configuration system](xref:fundamentals/configuration/index) gives you 
 
 2. Store the option values
 
-   The configuration system allows you to store option values anywhere you want. However, most sites use *appsettings.json*, so we'll take that approach:
+   The configuration system allows you to store option values anywhere you want. However, most sites use `appsettings.json`, so we'll take that approach:
 
    [!code-json[](http-modules/sample/Asp.Net.Core/appsettings.json?range=1,14-18)]
 
@@ -182,7 +189,7 @@ The new [configuration system](xref:fundamentals/configuration/index) gives you 
 
     Update your `Startup` class:
 
-   1. If you're using *appsettings.json*, add it to the configuration builder in the `Startup` constructor:
+   1. If you're using `appsettings.json`, add it to the configuration builder in the `Startup` constructor:
 
       [!code-csharp[](../migration/http-modules/sample/Asp.Net.Core/Startup.cs?name=snippet_Ctor&highlight=5-6)]
 
@@ -210,9 +217,9 @@ This breaks down though if you want to use the same middleware twice, with diffe
 
 The solution is to get the options objects with the actual options values in your `Startup` class and pass those directly to each instance of your middleware.
 
-1. Add a second key to *appsettings.json*
+1. Add a second key to `appsettings.json`
 
-   To add a second set of options to the *appsettings.json* file, use a new key to uniquely identify it:
+   To add a second set of options to the `appsettings.json` file, use a new key to uniquely identify it:
 
    [!code-json[](http-modules/sample/Asp.Net.Core/appsettings.json?range=1,10-18&highlight=2-5)]
 
@@ -234,7 +241,7 @@ You saw earlier that the `Invoke` method in your middleware takes a parameter of
 public async Task Invoke(HttpContext context)
 ```
 
-`HttpContext` has significantly changed in ASP.NET Core. This section shows how to translate the most commonly used properties of [System.Web.HttpContext](/dotnet/api/system.web.httpcontext) to the new `Microsoft.AspNetCore.Http.HttpContext`.
+`HttpContext` has significantly changed in ASP.NET Core. This section shows how to translate the most commonly used properties of <xref:System.Web.HttpContext?displayProperty=fullName> to the new `Microsoft.AspNetCore.Http.HttpContext`.
 
 ### HttpContext
 
@@ -332,7 +339,7 @@ Gives you a unique id for each request. Very useful to include in your logs.
 
 **HttpContext.Response.TransmitFile**
 
-Serving up a file is discussed [here](../fundamentals/request-features.md#middleware-and-request-features).
+Serving up a file is discussed in <xref:fundamentals/request-features>.
 
 **HttpContext.Response.Headers**
 
@@ -371,6 +378,7 @@ The `SetCookies` callback method would look like the following:
 
 ## Additional resources
 
+* [Incremental HTTP module migration](inc/http-modules.md)
 * [HTTP Handlers and HTTP Modules Overview](/iis/configuration/system.webserver/)
 * [Configuration](xref:fundamentals/configuration/index)
 * [Application Startup](xref:fundamentals/startup)

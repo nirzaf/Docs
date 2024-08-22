@@ -1,17 +1,19 @@
 ---
 title: Redis backplane for ASP.NET Core SignalR scale-out
-author: tdykstra
+author: bradygaster
 description: Learn how to set up a Redis backplane to enable scale-out for an ASP.NET Core SignalR app.
 monikerRange: '>= aspnetcore-2.1'
-ms.author: tdykstra
+ms.author: wpickett
 ms.custom: mvc
-ms.date: 11/28/2018
+ms.date: 02/06/2024
 uid: signalr/redis-backplane
 ---
 
 # Set up a Redis backplane for ASP.NET Core SignalR scale-out
 
-By [Andrew Stanton-Nurse](https://twitter.com/anurse), [Brady Gaster](https://twitter.com/bradygaster), and [Tom Dykstra](https://github.com/tdykstra),
+By [Andrew Stanton-Nurse](https://twitter.com/anurse), [Brady Gaster](https://twitter.com/bradygaster), and [Tom Dykstra](https://github.com/tdykstra).
+
+:::moniker range=">= aspnetcore-8.0"
 
 This article explains SignalR-specific aspects of setting up a [Redis](https://redis.io/) server to use for scaling out an ASP.NET Core SignalR app.
 
@@ -19,67 +21,41 @@ This article explains SignalR-specific aspects of setting up a [Redis](https://r
 
 * Deploy a Redis server.
 
-  For production use, a Redis backplane is recommended only for on-premises infrastructure. To minimize latency, the Redis server should be in the same data center as the SignalR app. If your SignalR app is running in the Azure cloud, we recommend Azure SignalR Service instead of a Redis backplane. You can use the Azure Redis Cache Service for development and test environments. For more information, see the following resources:
+  > [!IMPORTANT]
+  > For production use, a Redis backplane is recommended only when it runs in the same data center as the SignalR app. Otherwise, network latency degrades performance. If your SignalR app is running in the Azure cloud, we recommend Azure SignalR Service instead of a Redis backplane.
+
+  For more information, see the following resources:
 
   * <xref:signalr/scale>
   * [Redis documentation](https://redis.io/)
-  * [Azure Redis Cache documentation](https://docs.microsoft.com/en-us/azure/redis-cache/)
+  * [Azure Redis Cache documentation](/azure/redis-cache/)
 
-::: moniker range="= aspnetcore-2.1"
+* In the SignalR app, install the following NuGet package:
 
-* In the SignalR app, install the `Microsoft.AspNetCore.SignalR.Redis` NuGet package.
-
-* In the `Startup.ConfigureServices` method, call `AddRedis` after `AddSignalR`:
+  * `Microsoft.AspNetCore.SignalR.StackExchangeRedis`
+  
+* Call <xref:Microsoft.Extensions.DependencyInjection.StackExchangeRedisDependencyInjectionExtensions.AddStackExchangeRedis*> by adding the following line before the line that calls `builder.Build()`) in the `Program.cs` file.
 
   ```csharp
-  services.AddSignalR().AddRedis("<your_Redis_connection_string>");
+  builder.Services.AddSignalR().AddStackExchangeRedis("<your_Redis_connection_string>");
   ```
-
+  
 * Configure options as needed:
- 
-  Most options can be set in the connection string or in the [ConfigurationOptions](https://stackexchange.github.io/StackExchange.Redis/Configuration#configuration-options) object. Options specified in `ConfigurationOptions` override the ones set in the connection string.
+
+  Most options can be set in the connection string or in the [`ConfigurationOptions`](https://stackexchange.github.io/StackExchange.Redis/Configuration#configuration-options) object. Options specified in `ConfigurationOptions` override the ones set in the connection string.
 
   The following example shows how to set options in the `ConfigurationOptions` object. This example adds a channel prefix so that multiple apps can share the same Redis instance, as explained in the following step.
 
   ```csharp
-  services.AddSignalR()
-    .AddRedis(connectionString, options => {
-        options.Configuration.ChannelPrefix = "MyApp";
-    });
-  ```
-
-  In the preceding code, `options.Configuration` is initialized with whatever was specified in the connection string.
-
-::: moniker-end
-
-::: moniker range="> aspnetcore-2.1"
-
-* In the SignalR app, install the `Microsoft.AspNetCore.SignalR.StackExchangeRedis` NuGet package.
-
-* In the `Startup.ConfigureServices` method, call `AddStackExchangeRedis` after `AddSignalR`:
-
-  ```csharp
-  services.AddSignalR().AddStackExchangeRedis("<your_Redis_connection_string>");
-  ```
-
-* Configure options as needed:
- 
-  Most options can be set in the connection string or in the [ConfigurationOptions](https://stackexchange.github.io/StackExchange.Redis/Configuration#configuration-options) object. Options specified in `ConfigurationOptions` override the ones set in the connection string.
-
-  The following example shows how to set options in the `ConfigurationOptions` object. This example adds a channel prefix so that multiple apps can share the same Redis instance, as explained in the following step.
-
-  ```csharp
-  services.AddSignalR()
+  builder.Services.AddSignalR()
     .AddStackExchangeRedis(connectionString, options => {
-        options.Configuration.ChannelPrefix = "MyApp";
+        options.Configuration.ChannelPrefix = RedisChannel.Literal("MyApp");
     });
   ```
 
   In the preceding code, `options.Configuration` is initialized with whatever was specified in the connection string.
 
   For information about Redis options, see the [StackExchange Redis documentation](https://stackexchange.github.io/StackExchange.Redis/Configuration.html).
-
-::: moniker-end
 
 * If you're using one Redis server for multiple SignalR apps, use a different channel prefix for each SignalR app.
 
@@ -90,7 +66,6 @@ This article explains SignalR-specific aspects of setting up a [Redis](https://r
   * [IIS](/iis/extensions/configuring-application-request-routing-arr/http-load-balancing-using-application-request-routing)
   * [HAProxy](https://www.haproxy.com/blog/load-balancing-affinity-persistence-sticky-sessions-what-you-need-to-know/)
   * [Nginx](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#sticky)
-  * [pfSense](https://www.netgate.com/docs/pfsense/loadbalancing/inbound-load-balancing.html#sticky-connections)
 
 ## Redis server errors
 
@@ -107,40 +82,6 @@ SignalR automatically reconnects when the Redis server is available again.
 ### Custom behavior for connection failures
 
 Here's an example that shows how to handle Redis connection failure events.
-
-::: moniker range="= aspnetcore-2.1"
-
-```csharp
-services.AddSignalR()
-        .AddRedis(o =>
-        {
-            o.ConnectionFactory = async writer =>
-            {
-                var config = new ConfigurationOptions
-                {
-                    AbortOnConnectFail = false
-                };
-                config.EndPoints.Add(IPAddress.Loopback, 0);
-                config.SetDefaultPorts();
-                var connection = await ConnectionMultiplexer.ConnectAsync(config, writer);
-                connection.ConnectionFailed += (_, e) =>
-                {
-                    Console.WriteLine("Connection to Redis failed.");
-                };
-
-                if (!connection.IsConnected)
-                {
-                    Console.WriteLine("Did not connect to Redis.");
-                }
-
-                return connection;
-            };
-        });
-```
-
-::: moniker-end
-
-::: moniker range="> aspnetcore-2.1"
 
 ```csharp
 services.AddSignalR()
@@ -171,11 +112,16 @@ services.AddSignalR()
         });
 ```
 
-::: moniker-end
+## Redis Cluster
 
-## Clustering
+[Redis Cluster](https://redis.io/topics/cluster-spec) utilizes multiple simultaneously active Redis servers to achieve high availability. When Redis Cluster is used as the backplane for SignalR, messages are delivered to all of the nodes of the cluster without code modifications to the app.
 
-Clustering is a method for achieving high availability by using multiple Redis servers. Clustering isn't officially supported, but it might work.
+There's a tradeoff between the number of nodes in the cluster and the throughput of the backplane. Increasing the number of nodes increases the availability of the cluster but decreases the throughput because messages must be transmitted to all of the nodes in the cluster.
+
+In the SignalR app, include all of the possible Redis nodes using either of the following approaches:
+
+* List the nodes in the connection string delimited with commas.
+* If using custom behavior for connection failures, add the nodes to [`ConfigurationOptions.Endpoints`](https://stackexchange.github.io/StackExchange.Redis/Configuration#configuration-options).
 
 ## Next steps
 
@@ -184,4 +130,18 @@ For more information, see the following resources:
 * <xref:signalr/scale>
 * [Redis documentation](https://redis.io/documentation)
 * [StackExchange Redis documentation](https://stackexchange.github.io/StackExchange.Redis/)
-* [Azure Redis Cache documentation](https://docs.microsoft.com/en-us/azure/redis-cache/)
+* [Azure Redis Cache documentation](/azure/redis-cache/)
+
+:::moniker-end
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane7.md)]
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane6.md)]
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane5.md)]
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane3.md)]
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane2.2.md)]
+
+[!INCLUDE[](~/signalr/redis-backplane/includes/redis-backplane2.1.md)]

@@ -1,11 +1,11 @@
 ﻿namespace PoliciesAuthApp1.Services.Handlers
 {
-    #region snippet_MinimumAgeHandlerClass
-    using Microsoft.AspNetCore.Authorization;
-    using PoliciesAuthApp1.Services.Requirements;
+    // <snippet_MinimumAgeHandlerClass>
     using System;
     using System.Security.Claims;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
+    using PoliciesAuthApp1.Services.Requirements;
 
     public class MinimumAgeHandler : AuthorizationHandler<MinimumAgeRequirement>
     {
@@ -42,5 +42,5 @@
             return Task.CompletedTask;
         }
     }
-    #endregion
+    // </snippet_MinimumAgeHandlerClass>
 }

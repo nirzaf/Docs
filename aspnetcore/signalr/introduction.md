@@ -1,14 +1,14 @@
 ---
-title: Introduction to ASP.NET Core SignalR
-author: tdykstra
+title: Overview of ASP.NET Core SignalR
+author: bradygaster
 description: Learn how the ASP.NET Core SignalR library simplifies adding real-time functionality to apps.
 monikerRange: '>= aspnetcore-2.1'
-ms.author: tdykstra
+ms.author: wpickett
 ms.custom: mvc
-ms.date: 04/25/2018
+ms.date: 03/07/2022
 uid: signalr/introduction
 ---
-# Introduction to ASP.NET Core SignalR
+# Overview of ASP.NET Core SignalR
 
 ## What is SignalR?
 
@@ -21,7 +21,7 @@ Good candidates for SignalR:
 * Collaborative apps. Whiteboard apps and team meeting software are examples of collaborative apps.
 * Apps that require notifications. Social networks, email, chat, games, travel alerts, and many other apps use notifications.
 
-SignalR provides an API for creating server-to-client [remote procedure calls (RPC)](https://wikipedia.org/wiki/Remote_procedure_call). The RPCs call JavaScript functions on clients from server-side .NET Core code.
+SignalR provides an API for creating server-to-client [remote procedure calls (RPC)](https://wikipedia.org/wiki/Remote_procedure_call). The RPCs invoke functions on clients from server-side .NET Core code. There are several [supported platforms](xref:signalr/supported-platforms), each with their respective client SDK. Because of this, the programming language being invoked by the RPC call varies.
 
 Here are some features of SignalR for ASP.NET Core:
 
@@ -29,14 +29,15 @@ Here are some features of SignalR for ASP.NET Core:
 * Sends messages to all connected clients simultaneously. For example, a chat room.
 * Sends messages to specific clients or groups of clients.
 * Scales to handle increasing traffic.
+* [SignalR Hub Protocol](https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/docs/specs/HubProtocol.md)
 
-The source is hosted in a [SignalR repository on GitHub](https://github.com/aspnet/signalr).
+The source is hosted in a [SignalR repository on GitHub](https://github.com/dotnet/AspNetCore/tree/main/src/SignalR).
 
 ## Transports
 
-SignalR supports several techniques for handling real-time communications:
+SignalR supports the following techniques for handling real-time communication (in order of graceful fallback):
 
-* [WebSockets](https://tools.ietf.org/html/rfc7118)
+* [WebSockets](xref:fundamentals/websockets)
 * Server-Sent Events
 * Long Polling
 
@@ -50,9 +51,13 @@ A hub is a high-level pipeline that allows a client and server to call methods o
 
 Hubs call client-side code by sending messages that contain the name and parameters of the client-side method. Objects sent as method parameters are deserialized using the configured protocol. The client tries to match the name to a method in the client-side code. When the client finds a match, it calls the method and passes to it the deserialized parameter data.
 
+[!INCLUDE[](~/includes/SignalR/es6.md)]
+
 ## Additional resources
 
+* [Introduction to ASP.NET Core SignalR](/training/modules/aspnet-core-signalr)
 * [Get started with SignalR for ASP.NET Core](xref:tutorials/signalr)
 * [Supported Platforms](xref:signalr/supported-platforms)
 * [Hubs](xref:signalr/hubs)
 * [JavaScript client](xref:signalr/javascript-client)
+* [Browsers that don't support ECMAScript 6 (ES6)](xref:signalr/supported-platforms#es6)

@@ -2,14 +2,14 @@
 title: Cache Tag Helper in ASP.NET Core MVC
 author: pkellner
 description: Learn how to use the Cache Tag Helper.
-ms.author: riande
+ms.author: tdykstra
 ms.custom: mvc
 ms.date: 10/10/2018
 uid: mvc/views/tag-helpers/builtin-th/cache-tag-helper
 ---
 # Cache Tag Helper in ASP.NET Core MVC
 
-By [Peter Kellner](http://peterkellner.net) and [Luke Latham](https://github.com/guardrex) 
+By [Peter Kellner](https://peterkellner.net)
 
 The Cache Tag Helper provides the ability to improve the performance of your ASP.NET Core app by caching its content to the internal ASP.NET Core cache provider.
 
@@ -133,7 +133,7 @@ The following example monitors the values of `Make` and `Model`. The example cac
 
 Example:
 
-*Startup.cs*:
+`Startup.cs`:
 
 ```csharp
 routes.MapRoute(
@@ -141,7 +141,7 @@ routes.MapRoute(
     template: "{controller=Home}/{action=Index}/{Make?}/{Model?}");
 ```
 
-*Index.cshtml*:
+`Index.cshtml`:
 
 ```cshtml
 <cache vary-by-route="Make,Model">
@@ -206,7 +206,7 @@ public IActionResult Index(string myParam1, string myParam2, string myParam3)
 }
 ```
 
-*Index.cshtml*:
+`Index.cshtml`:
 
 ```cshtml
 <cache vary-by="@Model">

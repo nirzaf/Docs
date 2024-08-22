@@ -2,14 +2,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi.Models;
 using TodoApi.Models;
+using Microsoft.AspNetCore.Hosting;
+
 
 namespace TodoApi
 {
     public class Startup2
     {
-        #region snippet_ConfigureServices
+        // <snippet_ConfigureServices>
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<TodoContext>(opt =>
@@ -18,28 +20,28 @@ namespace TodoApi
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // Register the Swagger generator, defining 1 or more Swagger documents
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
-            });
+            services.AddSwaggerGen();
         }
-        #endregion
+        // </snippet_ConfigureServices>
 
-        #region snippet_Configure
-        public void Configure(IApplicationBuilder app)
+        // <snippet_Configure>
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
-            // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
+            if (env.IsDevelopment())
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-            });
+                // Enable middleware to serve generated Swagger as a JSON endpoint, only in a development environment.
+                app.UseSwagger();
+
+                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+                // specifying the Swagger JSON endpoint.
+                app.UseSwaggerUI(c =>  // UseSwaggerUI is called only in Development.
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                });
+            }
 
             app.UseMvc();
         }
-        #endregion
+        // </snippet_Configure>
     }
 }

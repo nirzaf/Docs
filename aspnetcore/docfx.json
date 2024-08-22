@@ -2,108 +2,95 @@
   "build": {
     "content": [
       {
-        "files": [
-          "**/*.md"
-        ],
-        "exclude": [
-          "**/obj/**",
-          "**/sample/**",
-          "**/samples/**",
-          "aspnet/**",
-          "**/includes/**",
-          "**/aspnet-core-conceptual/**",
-          "_site/**",
-          "***/readme.md"
-        ],
-        "group": "group1",
+        "files": [ "**/*.md", "**/*.yml" ], 
+        "exclude": [ "**/includes/**", "***/license.md", "**/obj/**", "***/readme.md", "**/sample/**", "**/samples/**", "_site/**" ], 
+        "group": "group1", 
         "src": "."
       }
     ],
     "resource": [
       {
-        "files": [
-          "**/*.png",
-          "**/*.jpg",
-          "**/*.svg",
-          "**/*.pdf"
-        ],
-        "exclude": [
-          "**/obj/**",
-          "aspnet/core/**",
-          "**/includes/**",
-          "_site/**"
-        ],
-        "group": "group1",
-        "src": "."
+        "files": [ "**/*.png", "**/*.jpg", "**/*.gif", "**/*.svg", "**/*.pdf", "**/zone-pivot-groups.json" ], 
+        "exclude": [ "**/includes/**", "**/obj/**", "_site/**" ], 
+        "group": "group1", 
+        "src": "." 
       }
     ],
     "overwrite": [],
     "externalReference": [],
-    "xrefService": [
-      "https://xref.docs.microsoft.com/query?uid={uid}"
-    ],
     "globalMetadata": {
       "_navPath": "/foo",
       "_navRel": "/foo",
-      "breadcrumb_path": "/aspnet/breadcrumb/toc.json",
-      "feedback_github_repo": "aspnet/docs",
-      "feedback_product_url": "https://github.com/aspnet/Home/blob/master/CONTRIBUTING.md",
-      "feedback_system": "GitHub",
-      "ms.prod": "aspnet-core",
-      "searchScope": [
-        "ASP.NET Core"
-      ]
+      "breadcrumb_path": "/aspnet/core/breadcrumb/toc.json",
+      "feedback_system": "OpenSource",
+      "feedback_github_repo": "dotnet/AspNetCore.Docs",
+      "open_source_feedback_contributorGuideUrl": "https://learn.microsoft.com/contribute/content/dotnet/dotnet-contribute",
+      "open_source_feedback_issueUrl": "https://github.com/dotnet/aspnetcore.docs/issues/new?template=customer-feedback.yml",
+      "open_source_feedback_productName": "ASP.NET Core",
+      "open_source_feedback_issueTitle": "",
+      "open_source_feedback_issueLabels": "Source - Docs.ms,:watch: Not Triaged",
+      "open_source_feedback_productLogoLightUrl": "https://learn.microsoft.com/media/logos/logo_net.svg",
+      "open_source_feedback_productLogoDarkUrl": "https://learn.microsoft.com/media/logos/logo_net.svg",
+      "social_image_url": "/dotnet/media/dotnet-logo.png",
+      "feedback_product_url": "https://github.com/dotnet/aspnetcore/blob/main/CONTRIBUTING.md",
+      "ms.service": "aspnet-core",
+      "ms.topic": "conceptual",
+      "uhfHeaderId": "MSDocsHeader-AspNet",
+      "searchScope": [ "ASP.NET Core" ],
+      "zone_pivot_group_filename": "core/zone-pivot-groups.json"
     },
     "fileMetadata": {
-      "ms.technology": {
-        "azure/**/**.md": "aspnetcore-azure",
-        "client-side/**/**.md": "aspnetcore-clientside",
-        "data/**/**.md": "aspnetcore-data",
-        "fundamentals/**/**.md": "aspnetcore-fundamentals",
-        "getting-started/**/**.md": "aspnetcore-getstarted",
-        "host-and-deploy/**/**.md": "aspnetcore-hostdeploy",
-        "index.md": "aspnetcore",
-        "migration/**/**.md": "aspnetcore-migration",
-        "mobile/**/**.md": "aspnetcore-mobile",
-        "mvc/**/**.md": "aspnetcore-mvc",
-        "performance/**/**.md": "aspnetcore-performance",
-        "razor-pages/**/**.md": "aspnetcore-razorpages",
-        "release-notes/**/**.md": "aspnetcore-releasenotes",
-        "security/**/**.md": "aspnetcore-security",
-        "signalr/**/**.md": "aspnetcore-signalr",
-        "test/**/**.md": "aspnetcore-test",
-        "tutorials/**/**.md": "aspnetcore-tutorials",
-        "web-api/**/**.md": "aspnetcore-webapi"
+      "author": {
+        "whats-new/**/**.md": "rick-anderson"
+      },
+      "ms.author": {
+        "whats-new/**/**.md": "riande"
+      },
+      "ms.subservice": {
+        "introduction-to-aspnet-core.md": "index-page",
+        "**/client-side/**/**.md": "client-side",
+        "**/data/**/**.md": "data-access",
+        "**/fundamentals/**/**.md": "fundamentals",
+        "**/getting-started/**/**.md": "get-started",
+        "**/grpc/**/**.md": "grpc",
+        "**/host-and-deploy/**/**.md": "hosting-deployment",
+        "**/migration/**/**.md": "migration",
+        "**/mobile/**/**.md": "mobile",
+        "**/mvc/**/**.md": "mvc",
+        "**/performance/**/**.md": "performance",
+        "**/razor-pages/**/**.md": "razor-pages",
+        "**/release-notes/**/**.md": "release-notes",
+        "**/security/**/**.md": "security",
+        "**/signalr/**/**.md": "aspnetcore-signalr",
+        "**/test/**/**.md": "testing",
+        "**/tutorials/**/**.md": "tutorials",
+        "**/web-api/**/**.md": "web-api",
+        "whats-new/**/**.md": "whats-new",
+        "**/blazor/**/**.md": "blazor",
+        "**/blazor/hybrid/**/**.md": "blazor-hybrid",
+        "**/client-side/dotnet-interop.md": "blazor",
+        "**/mvc/views/tag-helpers/built-in/component-tag-helper.md": "blazor",
+        "**/mvc/views/tag-helpers/built-in/persist-component-state.md": "blazor"
       },
       "ms.topic": {
-        "azure/**/**.md": "conceptual",
-        "client-side/**/**.md": "conceptual",
-        "data/**/**.md": "conceptual",
-        "fundamentals/**/**.md": "conceptual",
-        "getting-started/**/**.md": "tutorial",
-        "host-and-deploy/**/**.md": "conceptual",
-        "index.md": "conceptual",
-        "migration/**/**.md": "conceptual",
-        "mobile/**/**.md": "conceptual",
-        "mvc/**/**.md": "conceptual",
-        "performance/**/**.md": "conceptual",
-        "razor-pages/**/**.md": "conceptual",
-        "release-notes/**/**.md": "conceptual",
-        "security/**/**.md": "conceptual",
-        "signalr/**/**.md": "conceptual",
-        "test/**/**.md": "conceptual",
-        "tutorials/**/**.md": "tutorial",
-        "web-api/**/**.md": "conceptual"
+        "**/getting-started/**/**.md": "tutorial",
+        "**/tutorials/**/**.md": "tutorial"
+      },
+      "no-loc": {
+        "**/**.md": [ "Blazor", "Blazor Hybrid", "Blazor Server", "Blazor WebAssembly", "BREACH", "cookie", "Cookie", "CRIME", "EF Core", "Home" , "global.json", "Identity", "JS", "Kestrel", ".NET MAUI", ".NET Multi-platform App UI", "Privacy" , "Razor", "REST", "SignalR", "Web View"  ]
+      },
+      "recommendations": {
+        "**/tutorials/**/**.md": "false"
       }
     },
     "template": [],
     "dest": "_site",
     "markdownEngineName": "markdig",
     "groups": {
-      "group1": {
-        "dest": "group1-dest",
-        "moniker_range": ">= aspnetcore-1.0"
-      }
-    }
+      "group1": { "dest": "group1-dest", "moniker_range": ">= aspnetcore-1.0" }
+    },
+    "xrefservice": [
+      "https://xref.docs.microsoft.com/query?uid={uid}"
+    ]
   }
 }

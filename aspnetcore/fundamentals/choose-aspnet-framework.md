@@ -1,9 +1,10 @@
 ---
 title: Choose between ASP.NET 4.x and ASP.NET Core
-author: rick-anderson
+author: tdykstra
 description: Explains ASP.NET Core vs. ASP.NET 4.x and how to choose between them.
-ms.author: riande
-ms.date: 09/11/2018
+ms.author: tdykstra
+ms.custom: mvc
+ms.date: 02/12/2020
 uid: fundamentals/choose-between-aspnet-and-aspnetcore
 ---
 # Choose between ASP.NET 4.x and ASP.NET Core
@@ -29,18 +30,17 @@ The following table compares ASP.NET Core to ASP.NET 4.x.
 |Build for Windows, macOS, or Linux|Build for Windows|
 |[Razor Pages](xref:razor-pages/index) is the recommended approach to create a Web UI as of ASP.NET Core 2.x. See also [MVC](xref:mvc/overview), [Web API](xref:tutorials/first-web-api), and [SignalR](xref:signalr/introduction).|Use [Web Forms](/aspnet/web-forms), [SignalR](/aspnet/signalr), [MVC](/aspnet/mvc), [Web API](/aspnet/web-api/), [WebHooks](/aspnet/webhooks/), or [Web Pages](/aspnet/web-pages)|
 |Multiple versions per machine|One version per machine|
-|Develop with Visual Studio, [Visual Studio for Mac](https://www.visualstudio.com/vs/visual-studio-mac/), or [Visual Studio Code](https://code.visualstudio.com/) using C# or F#|Develop with Visual Studio using C#, VB, or F#|
+|Develop with [Visual Studio](https://visualstudio.microsoft.com/vs/), [Visual Studio for Mac](https://visualstudio.microsoft.com/vs/mac/), or [Visual Studio Code](https://code.visualstudio.com/) using C# or F#|Develop with [Visual Studio](https://visualstudio.microsoft.com/vs/) using C#, VB, or F#|
 |Higher performance than ASP.NET 4.x|Good performance|
-|[Choose .NET Framework or .NET Core runtime](/dotnet/articles/standard/choosing-core-framework-server)|Use .NET Framework runtime|
+|[Use .NET Core runtime](/dotnet/standard/choosing-core-framework-server)|Use .NET Framework runtime|
 
 See [ASP.NET Core targeting .NET Framework](xref:index#target-framework) for information on ASP.NET Core 2.x support on .NET Framework.
 
 ## ASP.NET Core scenarios
 
-* [Razor Pages](xref:razor-pages/index) is the recommended approach to create a Web UI as of ASP.NET Core 2.x.
-* [Websites](xref:tutorials/first-mvc-app/index)
+* [Websites](xref:tutorials/first-mvc-app/start-mvc)
 * [APIs](xref:tutorials/first-web-api)
-* [Real-time](xref:signalr/index)
+* [Real-time](xref:signalr/introduction)
 * [Deploy an ASP.NET Core app to Azure](/azure/app-service/app-service-web-get-started-dotnet)
 
 ## ASP.NET 4.x scenarios
@@ -55,6 +55,3 @@ See [ASP.NET Core targeting .NET Framework](xref:index#target-framework) for inf
 * [Introduction to ASP.NET](/aspnet/overview)
 * [Introduction to ASP.NET Core](xref:index)
 * <xref:host-and-deploy/azure-apps/index>
-
-> [!NOTE]
-> We’re testing the usability of a proposed new structure for the ASP.NET Core table of contents.  If you have a few minutes to try an exercise of finding 7 different topics in the current or proposed table of contents, please [click here to participate in the study](https://dpk4xbh5.optimalworkshop.com/treejack/rps16hd5).
